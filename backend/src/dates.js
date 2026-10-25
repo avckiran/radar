@@ -37,3 +37,23 @@ export function nextWeekday(ymd, weekday) {
 export function endOfWeek(ymd) {
   return addDays(ymd, 6 - weekdayOf(ymd));
 }
+
+export function daysBetween(fromYmd, toYmd) {
+  return Math.round((toUtcDate(toYmd) - toUtcDate(fromYmd)) / 86400000);
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function weekdayShort(ymd) {
+  return WEEKDAYS[weekdayOf(ymd)];
+}
+
+export function monthDay(ymd) {
+  const [, m, d] = ymd.split('-').map(Number);
+  return `${MONTHS[m - 1]} ${d}`;
+}
+
+export function isValidYmd(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && addDays(value, 0) === value;
+}

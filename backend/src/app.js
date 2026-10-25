@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import { segmentsRouter } from './routes/segments.js';
+import { homeRouter } from './routes/home.js';
+import { itemsRouter } from './routes/items.js';
+import { HttpError } from './lifecycle.js';
 
 // Short hints only: never echo the connection string
 function explainDbError(err) {
@@ -15,10 +18,11 @@ function explainDbError(err) {
   return `Database error${code ? ` (code ${code})` : ''}. See the API console for details.`;
 }
 
-export function createApp({ db, corsOrigins }) {
+export function createApp({ db, corsOrigins, now }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(cors({ origin: corsOrigins }));
+  app.use(express.json({ limit: '100kb' }));
 
   app.get('/health', async (req, res) => {
     const database = { ok: false };
@@ -42,11 +46,17 @@ export function createApp({ db, corsOrigins }) {
     res.status(database.ok ? 200 : 503).json({ status: database.ok ? 'ok' : 'degraded', database });
   });
 
-  app.use('/api/segments', segmentsRouter({ db }));
+  app.use('/api/segments', segmentsRouter({ db, now }));
+  app.use('/api/home', homeRouter({ db, now }));
+  app.use('/api/items', itemsRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
   app.use((err, req, res, next) => {
+    if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+    if (err.type === 'entity.parse.failed' || err.type === 'entity.too.large') {
+      return res.status(400).json({ error: 'That request couldn’t be read.' });
+    }
     console.error(err);
     res.status(500).json({ error: 'Something went wrong' });
   });
