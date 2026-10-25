@@ -69,7 +69,7 @@ function OptionButton({ icon, label, active, open, onClick }) {
   );
 }
 
-export default function CaptureSheet({ onClose, onSaved }) {
+export default function CaptureSheet({ initialSegmentId = '', onClose, onSaved }) {
   const shell = useShellData();
   const online = useOnline();
   const wide = useMediaQuery('(min-width: 768px)');
@@ -84,7 +84,7 @@ export default function CaptureSheet({ onClose, onSaved }) {
     url: '',
     description: '',
     attachedUrl: '',
-    segmentId: '',
+    segmentId: initialSegmentId,
     dueDate: '',
   }));
   const [expanded, setExpanded] = useState(false);

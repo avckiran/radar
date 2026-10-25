@@ -26,7 +26,7 @@ export function waitingAgeDays(item, today, timeZone) {
   return daysBetween(todayInZone(item.waiting_since, timeZone), today);
 }
 
-function waitingTag(item, today, timeZone) {
+export function waitingTag(item, today, timeZone) {
   const days = waitingAgeDays(item, today, timeZone);
   let label = days === 0 ? 'Waiting since today' : `Waiting ${plural(days, 'day')}`;
   if (item.follow_up_date) label += ` · ${followUpText(item.follow_up_date, today)}`;

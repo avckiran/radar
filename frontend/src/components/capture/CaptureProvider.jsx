@@ -10,18 +10,20 @@ function isTyping(target) {
 }
 
 export function CaptureProvider({ children }) {
-  const [open, setOpen] = useState(false);
+  const [openWith, setOpenWith] = useState(null);
   const { notifyChanged } = useShellData();
   const toast = useToast();
 
-  const openCapture = useCallback(() => setOpen(true), []);
+  const openCapture = useCallback((options) => {
+    setOpenWith({ segmentId: typeof options?.segmentId === 'string' ? options.segmentId : '' });
+  }, []);
 
   useEffect(() => {
     const onKey = (e) => {
       if (e.key.toLowerCase() !== 'n' || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       if (isTyping(e.target) || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
       e.preventDefault();
-      setOpen(true);
+      setOpenWith({ segmentId: '' });
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -29,7 +31,7 @@ export function CaptureProvider({ children }) {
 
   const onSaved = useCallback(
     (result) => {
-      setOpen(false);
+      setOpenWith(null);
       if (!result.created) toast.show('Already saved.');
       else toast.show(result.segmentName ? `Added to ${result.segmentName}` : 'Saved to Inbox');
       notifyChanged();
@@ -41,7 +43,7 @@ export function CaptureProvider({ children }) {
   return (
     <Ctx.Provider value={value}>
       {children}
-      {open && <CaptureSheet onClose={() => setOpen(false)} onSaved={onSaved} />}
+      {openWith && <CaptureSheet initialSegmentId={openWith.segmentId} onClose={() => setOpenWith(null)} onSaved={onSaved} />}
     </Ctx.Provider>
   );
 }
