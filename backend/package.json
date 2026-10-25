@@ -1,5 +1,5 @@
 {
-  "name": "radar-backend",
+  "name": "radar-household-backend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",
-    "db:hello": "node scripts/hello-table.js"
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
