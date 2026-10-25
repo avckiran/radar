@@ -8,23 +8,31 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiGet(path, { signal } = {}) {
+async function request(path, { method = 'GET', body, signal } = {}) {
   if (!API_URL) throw new ApiError('Couldn’t reach the server.', { network: true });
   let res;
   try {
-    res = await fetch(`${API_URL}${path}`, { signal });
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      signal,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
   } catch (err) {
     if (err.name === 'AbortError') throw err;
     throw new ApiError('Couldn’t reach the server.', { network: true });
   }
-  let body = null;
+  let json = null;
   try {
-    body = await res.json();
+    json = await res.json();
   } catch {
-
+    json = null;
   }
   if (!res.ok) {
-    throw new ApiError(body?.error || 'Something went wrong on our side. Your items are safe.', { status: res.status });
+    throw new ApiError(json?.error || 'Something went wrong on our side. Your items are safe.', { status: res.status });
   }
-  return body;
+  return json;
 }
+
+export const apiGet = (path, options) => request(path, options);
+export const apiPost = (path, body = {}, options) => request(path, { ...options, method: 'POST', body });

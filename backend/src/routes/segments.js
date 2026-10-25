@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { getCurrentContext } from '../household.js';
+import { todayInZone } from '../dates.js';
 
-export function segmentsRouter({ db }) {
+export function segmentsRouter({ db, now = () => new Date() }) {
   const router = Router();
 
   router.get('/', async (req, res) => {
@@ -12,13 +13,16 @@ export function segmentsRouter({ db }) {
     }
     const segments = await db.query(
       `select s.id, s.name, s.color, s.sort_order as "sortOrder", s.protected,
-              count(i.id) filter (where i.kind = 'action' and i.state = 'active')::int as "activeCount"
+              count(i.id) filter (
+                where i.kind = 'action'
+                  and (i.state = 'active' or (i.state = 'snoozed' and i.snoozed_until <= $2::date))
+              )::int as "activeCount"
          from segments s
          left join items i on i.segment_id = s.id and i.deleted_at is null
         where s.household_id = $1 and s.deleted_at is null
         group by s.id
         order by s.sort_order, s.name`,
-      [ctx.householdId]
+      [ctx.householdId, todayInZone(now(), ctx.timeZone)]
     );
     const inbox = await db.query(
       `select count(*)::int as n from items

@@ -92,7 +92,10 @@ export default function Sidebar() {
           <i className="rd-avatar" aria-hidden="true">
             {initial}
           </i>
-          <span className="rd-t-secondary rd-muted rd-ell">{data.user.displayName}</span>
+          <span className="rd-stack sidebar-user__text">
+            <span className="rd-t-secondary rd-muted rd-ell">{data.user.displayName}</span>
+            {data.user.isOwner && <span className="rd-t-meta rd-quiet sidebar-user__role">Owner</span>}
+          </span>
         </div>
       )}
     </nav>

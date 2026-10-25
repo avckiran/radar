@@ -13,7 +13,7 @@ async function start(db) {
 function fakeDb({ household = true } = {}) {
   return {
     query: async (sql) => {
-      if (sql.includes('from households')) return { rows: household ? [{ id: 'h1', name: 'Our household' }] : [] };
+      if (sql.includes('from households')) return { rows: household ? [{ id: 'h1', name: 'Our household', time_zone: 'America/Chicago', nudge_days: 5 }] : [] };
       if (sql.includes('display_name')) return { rows: [{ display_name: 'Chandra' }] };
       if (sql.includes('from segments')) {
         return { rows: [

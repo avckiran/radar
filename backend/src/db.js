@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import pg from 'pg';
 
+// Return calendar dates as plain 'YYYY-MM-DD' strings instead of shifting them through the server's time zone
+pg.types.setTypeParser(1082, (value) => value);
+
 export function createPool(config) {
   let url;
   try {
@@ -29,4 +32,20 @@ export function createPool(config) {
 
   pool.on('error', (err) => console.error('Idle database connection error:', err.code || err.message));
   return pool;
+}
+
+export async function withTransaction(db, fn) {
+  if (typeof db.connect !== 'function') return fn(db);
+  const client = await db.connect();
+  try {
+    await client.query('begin');
+    const result = await fn(client);
+    await client.query('commit');
+    return result;
+  } catch (err) {
+    await client.query('rollback').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }

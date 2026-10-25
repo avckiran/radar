@@ -12,6 +12,7 @@ import './styles/tokens.css';
 import './styles/rd-components.css';
 import './styles/base.css';
 import './styles/shell.css';
+import './styles/home.css';
 
 import App from './App.jsx';
 
