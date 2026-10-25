@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import { getCurrentContext } from '../household.js';
 import { ACTIONS, applyTransition } from '../lifecycle.js';
+import { createItem } from '../capture.js';
 
 export function itemsRouter({ db, now = () => new Date() }) {
   const router = Router();
+
+  router.post('/', async (req, res) => {
+    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
+    const ctx = await getCurrentContext(db);
+    if (!ctx) return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
+    const result = await createItem(db, { householdId: ctx.householdId, actorId: ctx.user.id }, req.body);
+    res.status(result.created ? 201 : 200).json(result);
+  });
 
   for (const action of ACTIONS) {
     router.post(`/:id/${action}`, async (req, res) => {

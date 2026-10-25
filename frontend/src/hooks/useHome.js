@@ -8,7 +8,7 @@ import { useToast } from '../components/ui/Toast.jsx';
 export function useHome() {
   const toast = useToast();
   const online = useOnline();
-  const { refresh: refreshShell } = useShellData();
+  const { refresh: refreshShell, changes } = useShellData();
   const [state, setState] = useState({ data: null, loading: true, error: null, updatedAt: null });
   const [pending, setPending] = useState(() => new Set());
   const latest = useRef(0);
@@ -29,6 +29,10 @@ export function useHome() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (changes > 0) load({ quiet: true });
+  }, [changes, load]);
 
   useEffect(() => {
     if (online) load({ quiet: true });

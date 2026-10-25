@@ -8,6 +8,7 @@ export function ShellDataProvider({ children }) {
   const online = useOnline();
   const [state, setState] = useState({ data: null, loading: true, error: null, updatedAt: null });
   const [attempt, setAttempt] = useState(0);
+  const [changes, setChanges] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -28,7 +29,11 @@ export function ShellDataProvider({ children }) {
   }, [online]);
 
   const refresh = useCallback(() => setAttempt((n) => n + 1), []);
-  const value = useMemo(() => ({ ...state, refresh }), [state, refresh]);
+  const notifyChanged = useCallback(() => {
+    setAttempt((n) => n + 1);
+    setChanges((n) => n + 1);
+  }, []);
+  const value = useMemo(() => ({ ...state, refresh, notifyChanged, changes }), [state, refresh, notifyChanged, changes]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

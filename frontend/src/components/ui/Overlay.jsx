@@ -3,13 +3,13 @@ import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), textarea, select, [href], [tabindex]:not([tabindex="-1"])';
 
-export default function Overlay({ label, onClose, children }) {
+export default function Overlay({ label, onClose, onBackdrop, expanded = false, handle = true, children }) {
   const wide = useMediaQuery('(min-width: 768px)');
   const panel = useRef(null);
 
   useEffect(() => {
     const opener = document.activeElement;
-    const first = panel.current?.querySelector(FOCUSABLE);
+    const first = panel.current?.querySelector('[data-autofocus]') ?? panel.current?.querySelector(FOCUSABLE);
     (first ?? panel.current)?.focus();
     return () => {
       if (opener instanceof HTMLElement && document.contains(opener)) opener.focus();
@@ -37,18 +37,18 @@ export default function Overlay({ label, onClose, children }) {
   }
 
   return (
-    <div className={`overlay ${wide ? 'overlay--center' : ''}`} onClick={onClose}>
+    <div className={`overlay ${wide ? 'overlay--center' : ''}`} onClick={onBackdrop === undefined ? onClose : (onBackdrop ?? undefined)}>
       <div
         ref={panel}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className={`overlay__panel ${wide ? 'rd-modal' : 'rd-sheet'}`}
+        className={`overlay__panel ${wide ? 'rd-modal' : 'rd-sheet'} ${expanded ? 'overlay__panel--expanded' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
-        {!wide && <div className="rd-grab" aria-hidden="true" />}
+        {!wide && handle && <div className="rd-grab" aria-hidden="true" />}
         {children}
       </div>
     </div>

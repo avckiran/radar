@@ -31,6 +31,7 @@ export function segmentsRouter({ db, now = () => new Date() }) {
     );
     res.json({
       household: { name: ctx.householdName },
+      today: todayInZone(now(), ctx.timeZone),
       user: ctx.user,
       inboxCount: inbox.rows[0].n,
       segments: segments.rows,
