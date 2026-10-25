@@ -28,7 +28,7 @@ function Meta({ row }) {
   );
 }
 
-export default function ItemRow({ row, wide, disabled, onAction }) {
+export default function ItemRow({ row, wide, disabled, onAction, onOpen }) {
   const level = row.due?.kind ?? row.tag.kind;
   const urgency = level === 'overdue' ? 'rd-itemrow--overdue' : level === 'soon' ? 'rd-itemrow--soon' : '';
   const buttons = row.actions.map((key) => {
@@ -52,7 +52,9 @@ export default function ItemRow({ row, wide, disabled, onAction }) {
       <div className={`rd-card rd-itemrow rd-itemrow--wide ${urgency}`}>
         <div className="rd-fill itemrow__body">
           <StateTag tag={row.tag} />
-          <div className="rd-itemrow__title rd-ell">{row.title}</div>
+          <button type="button" className="rd-itemrow__title rd-ell itemrow__open" onClick={() => onOpen(row.id)}>
+            {row.title}
+          </button>
           <Meta row={row} />
         </div>
         <div className="rd-actions--wide">{buttons}</div>
@@ -62,7 +64,9 @@ export default function ItemRow({ row, wide, disabled, onAction }) {
   return (
     <div className={`rd-card rd-itemrow ${urgency}`}>
       <StateTag tag={row.tag} />
-      <div className="rd-itemrow__title rd-ell">{row.title}</div>
+      <button type="button" className="rd-itemrow__title rd-ell itemrow__open" onClick={() => onOpen(row.id)}>
+        {row.title}
+      </button>
       <Meta row={row} />
       <div className="rd-actions">{buttons}</div>
     </div>

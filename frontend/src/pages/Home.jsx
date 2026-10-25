@@ -9,8 +9,10 @@ import SnoozePicker from '../components/home/SnoozePicker.jsx';
 import WaitingForm from '../components/home/WaitingForm.jsx';
 import AllClearCard from '../components/home/AllClearCard.jsx';
 import Popover from '../components/home/Popover.jsx';
+import { useOpenItem } from '../hooks/useOpenItem.js';
 import { useHome } from '../hooks/useHome.js';
 import { useOnline } from '../hooks/useOnline.js';
+import { useElementWidth } from '../hooks/useElementWidth.js';
 import { useMediaQuery } from '../hooks/useMediaQuery.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { dayHint, longDate, shortDate, weekdayLong } from '../lib/dates.js';
@@ -51,7 +53,7 @@ function LoadError({ message, onRetry }) {
   );
 }
 
-function NextUp({ items }) {
+function NextUp({ items, onOpen }) {
   const [open, setOpen] = useState(() => window.matchMedia('(min-width: 1280px)').matches);
   if (items.length === 0) return null;
   return (
@@ -59,10 +61,12 @@ function NextUp({ items }) {
       <summary className="rd-overline">Next up · {items.length}</summary>
       <ul className="nextup__list">
         {items.map((item) => (
-          <li key={item.id} className="nextup__item">
-            <span className="nextup__day">{item.dayLabel}</span>
-            <span className="rd-fill rd-ell">{item.title}</span>
-            {item.segment && <span className="rd-ell nextup__segment">{item.segment.name}</span>}
+          <li key={item.id}>
+            <button type="button" className="nextup__item itemrow__open" onClick={() => onOpen(item.id)}>
+              <span className="nextup__day">{item.dayLabel}</span>
+              <span className="rd-fill rd-ell">{item.title}</span>
+              {item.segment && <span className="rd-ell nextup__segment">{item.segment.name}</span>}
+            </button>
           </li>
         ))}
       </ul>
@@ -70,7 +74,7 @@ function NextUp({ items }) {
   );
 }
 
-function RecentlyCompleted({ items }) {
+function RecentlyCompleted({ items, onOpen }) {
   if (items.length === 0) return null;
   return (
     <section aria-labelledby="recent-h" className="home__section">
@@ -79,13 +83,15 @@ function RecentlyCompleted({ items }) {
       </h2>
       <ul className="home__list home__list--tight">
         {items.map((item) => (
-          <li key={item.id} className="recent__item">
-            <Icon name="check" size={16} />
-            <span className="rd-fill rd-ell">{item.title}</span>
-            <span className="rd-t-secondary rd-quiet">
-              {item.by ? `${item.by} · ` : ''}
-              {item.dayLabel}
-            </span>
+          <li key={item.id}>
+            <button type="button" className="recent__item itemrow__open" onClick={() => onOpen(item.id)}>
+              <Icon name="check" size={16} />
+              <span className="rd-fill rd-ell">{item.title}</span>
+              <span className="rd-t-secondary rd-quiet">
+                {item.by ? `${item.by} · ` : ''}
+                {item.dayLabel}
+              </span>
+            </button>
           </li>
         ))}
       </ul>
@@ -109,9 +115,12 @@ function InboxStrip({ count }) {
 export default function Home() {
   useDocumentTitle('Home');
   const navigate = useNavigate();
+  const { openItem } = useOpenItem();
   const online = useOnline();
   const wide = useMediaQuery('(min-width: 768px)');
-  const twoColumns = useMediaQuery('(min-width: 1024px)');
+  const [pageRef, pageWidth] = useElementWidth();
+  const wideViewport = useMediaQuery('(min-width: 1024px)');
+  const twoColumns = pageWidth > 0 ? pageWidth >= 960 : wideViewport;
   const { data, loading, error, pending, reload, act } = useHome();
   const [popoverFor, setPopoverFor] = useState(null);
   const [dialog, setDialog] = useState(null);
@@ -140,7 +149,7 @@ export default function Home() {
   }
 
   function onAction(key, row) {
-    if (key === 'done') act(row, 'done', {}, { success: 'Marked done', optimistic: true });
+    if (key === 'done') act(row, 'done', {}, { success: 'Marked done', optimistic: true, undo: true });
     else if (key === 'back') act(row, 'reopen', {}, { success: 'Back to active' });
     else if (key === 'sort') navigate('/inbox');
     else if (key === 'snooze') (wide ? setPopoverFor(row.id) : setDialog({ type: 'snooze', row }));
@@ -161,7 +170,7 @@ export default function Home() {
         <ul className="home__list">
           {data.needsAttention.map((row) => (
             <li key={row.id} className="home__row">
-              <ItemRow row={row} wide={wide} disabled={!online || pending.has(row.id)} onAction={onAction} />
+              <ItemRow row={row} wide={wide} disabled={!online || pending.has(row.id)} onAction={onAction} onOpen={openItem} />
               {popoverFor === row.id && (
                 <Popover label="Snooze until" onClose={() => setPopoverFor(null)}>
                   <SnoozePicker today={today} onPick={(date) => snooze(row, date)} onCancel={() => setPopoverFor(null)} />
@@ -190,11 +199,11 @@ export default function Home() {
   );
 
   const inbox = <InboxStrip count={data.inboxCount} />;
-  const nextUp = <NextUp items={data.nextUp} />;
-  const recent = <RecentlyCompleted items={data.recentlyCompleted} />;
+  const nextUp = <NextUp items={data.nextUp} onOpen={openItem} />;
+  const recent = <RecentlyCompleted items={data.recentlyCompleted} onOpen={openItem} />;
 
   return (
-    <div className="page home">
+    <div ref={pageRef} className="page home">
       <header className="page__header">
         <h1 className="page__title rd-t-screen-title">
           <span className="sr-only">Home, </span>

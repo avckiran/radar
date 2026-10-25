@@ -1,0 +1,244 @@
+.detail-screen,
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  outline: none;
+}
+.detail-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.detail-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: min(440px, 100vw);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+}
+.detail-panel--docked {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  flex: none;
+  width: 420px;
+  box-shadow: none;
+}
+
+.detail__header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 var(--space-8) 0 var(--space-12);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.detail__back {
+  gap: var(--space-4);
+  padding-left: var(--space-8);
+}
+.detail__kind {
+  padding-left: var(--space-8);
+}
+.detail__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  padding-bottom: var(--space-32);
+}
+.detail__body > * {
+  flex: none;
+}
+.detail__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+.detail__title {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.detail__added {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+}
+.detail__fields {
+  padding: 0;
+  overflow: hidden;
+}
+.detail__history-title {
+  margin: 0 0 var(--space-12);
+}
+.detail__delete {
+  display: flex;
+  justify-content: flex-start;
+}
+.detail__offline {
+  margin: 0;
+}
+.detail__saved {
+  min-height: 44px;
+  gap: var(--space-8);
+}
+.detail__bar {
+  flex: none;
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  padding-bottom: calc(var(--space-12) + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.detail__bar .rd-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.detail-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-16);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.detail-field:last-child {
+  border-bottom: 0;
+}
+button.detail-field:hover {
+  background: var(--surface-2);
+}
+.detail-field__label {
+  width: 96px;
+  flex: none;
+}
+.detail-field__value {
+  flex: 1;
+  min-width: 0;
+}
+.detail-field--editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+}
+.detail-field--static {
+  padding-right: var(--space-8);
+}
+.detail__body > .detail-field {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.detail__body > .detail-field .detail-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.detail__body > .detail-field--editing {
+  padding: 0;
+}
+
+.detail-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.detail-notes__area--large {
+  min-height: 220px;
+}
+
+.detail-wait {
+  padding: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.detail-wait__kv {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.detail-wait__kv > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-wait__kv > div:last-child {
+  border-bottom: 0;
+}
+.detail-wait__kv dt {
+  width: 96px;
+  flex: none;
+}
+.detail-wait__kv dd {
+  margin: 0;
+  font-size: 14px;
+}
+.detail-wait__composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.detail-wait__composer .rd-btn {
+  align-self: flex-end;
+}
+.detail-wait__next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.detail-wait__hint {
+  min-height: 44px;
+  margin: 0;
+}
+
+.capture__plain {
+  margin: 0;
+}
+
+.itemrow__open {
+  display: block;
+  max-width: 100%;
+  text-align: left;
+}
+button.itemrow__open:hover .rd-fill,
+button.rd-itemrow__title:hover {
+  text-decoration: underline;
+}
+button.nextup__item,
+button.recent__item {
+  width: 100%;
+  min-height: var(--target-min);
+  text-align: left;
+}
+button.nextup__item {
+  display: flex;
+}
+button.recent__item {
+  display: flex;
+}

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import BottomBar from './BottomBar.jsx';
 import MenuSheet from './MenuSheet.jsx';
+import DetailHost from '../detail/DetailHost.jsx';
 import { ErrorBanner, OfflineStrip } from '../ui/Banners.jsx';
 import { useShellData } from '../../hooks/useShellData.jsx';
 import { useOnline } from '../../hooks/useOnline.js';
@@ -31,6 +32,7 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+      <DetailHost />
       <BottomBar onMenu={() => setMenuOpen(true)} menuOpen={menuOpen} menuButtonRef={menuButton} />
       {menuOpen && <MenuSheet onClose={closeMenu} />}
     </div>
