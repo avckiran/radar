@@ -1,9 +1,7 @@
-// Run with: npm test   (uses Node's built-in test runner, no extra libraries)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
 
-// Starts the app on a random free port and returns helpers to call it.
 async function start(db) {
   const app = createApp({ db, corsOrigins: ['http://localhost:5173'] });
   const server = await new Promise((resolve) => {
@@ -16,8 +14,8 @@ async function start(db) {
 test('/health is ok when the database answers', async () => {
   const db = {
     query: async (sql) =>
-      sql.includes('hello_world')
-        ? { rows: [{ message: 'Hello from Supabase' }] }
+      sql.includes('households')
+        ? { rows: [{ n: 1 }] }
         : { rows: [{ server_time: new Date().toISOString() }] },
   };
   const { base, close } = await start(db);
@@ -26,11 +24,11 @@ test('/health is ok when the database answers', async () => {
   await close();
   assert.equal(res.status, 200);
   assert.equal(body.status, 'ok');
-  assert.equal(body.database.message, 'Hello from Supabase');
+  assert.equal(body.database.households, 1);
 });
 
 test('/health says degraded (503) when the database is unreachable, without leaking details', async (t) => {
-  t.mock.method(console, 'error', () => {}); // the app logs the failure on purpose; keep test output clean
+  t.mock.method(console, 'error', () => {});
   const db = {
     query: async () => {
       const e = new Error('connect ECONNREFUSED postgres://user:secret@host');
@@ -47,13 +45,13 @@ test('/health says degraded (503) when the database is unreachable, without leak
   assert.doesNotMatch(text, /secret/);
 });
 
-test('/health explains a missing hello_world table', async (t) => {
-  t.mock.method(console, 'error', () => {}); // expected log line, hidden in tests
+test('/health explains missing tables', async (t) => {
+  t.mock.method(console, 'error', () => {});
   let calls = 0;
   const db = {
     query: async () => {
       if (calls++ === 0) return { rows: [{ server_time: 'now' }] };
-      const e = new Error('relation "hello_world" does not exist');
+      const e = new Error('relation "households" does not exist');
       e.code = '42P01';
       throw e;
     },
@@ -61,7 +59,7 @@ test('/health explains a missing hello_world table', async (t) => {
   const { base, close } = await start(db);
   const body = await (await fetch(`${base}/health`)).json();
   await close();
-  assert.match(body.database.error, /npm run db:hello/);
+  assert.match(body.database.error, /npm run db:migrate/);
 });
 
 test('/health works without a database configured', async () => {

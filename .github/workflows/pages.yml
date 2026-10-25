@@ -1,5 +1,4 @@
-# Builds the frontend and publishes it to GitHub Pages whenever main changes.
-# One-time setup in GitHub: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Needs Settings > Pages > Source: "GitHub Actions". Optional repo variables: PAGES_BASE ("/radar/" for a project site), API_URL.
 name: Deploy frontend to GitHub Pages
 
 on:
@@ -13,7 +12,6 @@ permissions:
   pages: write
   id-token: write
 
-# Never run two deployments at once.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -30,9 +28,6 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          # Set these under Settings > Secrets and variables > Actions > Variables (they are public, not secret).
-          # PAGES_BASE: "/" for avckiran.github.io, "/radar/" for avckiran.github.io/radar/
-          # API_URL: the public address of the API (empty until go-live in Task 11)
           VITE_BASE: ${{ vars.PAGES_BASE || '/' }}
           VITE_API_URL: ${{ vars.API_URL }}
       - uses: actions/upload-pages-artifact@v3

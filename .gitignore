@@ -10,3 +10,12 @@ dist/
 # Logs and OS noise
 *.log
 .DS_Store
+
+# Files waiting for you to delete them by hand
+_to_delete/
+
+# Generated from design/tokens.json by `npm run tokens`
+frontend/src/styles/tokens.css
+
+# Work in progress documents and other logs
+docs/
