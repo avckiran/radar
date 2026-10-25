@@ -1,0 +1,17 @@
+{
+  "name": "radar",
+  "private": true,
+  "version": "0.0.0",
+  "description": "RADAR: a shared household app for tasks, notes and links.",
+  "engines": { "node": ">=20" },
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "test": "npm test -w backend",
+    "db:hello": "npm run db:hello -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

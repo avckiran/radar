@@ -1,0 +1,50 @@
+# Builds the frontend and publishes it to GitHub Pages whenever main changes.
+# One-time setup in GitHub: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**', 'package.json', 'package-lock.json', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deployments at once.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          # Set these under Settings > Secrets and variables > Actions > Variables (they are public, not secret).
+          # PAGES_BASE: "/" for avckiran.github.io, "/radar/" for avckiran.github.io/radar/
+          # API_URL: the public address of the API (empty until go-live in Task 11)
+          VITE_BASE: ${{ vars.PAGES_BASE || '/' }}
+          VITE_API_URL: ${{ vars.API_URL }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
