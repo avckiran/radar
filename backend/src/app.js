@@ -3,7 +3,8 @@ import cors from 'cors';
 import { segmentsRouter } from './routes/segments.js';
 import { homeRouter } from './routes/home.js';
 import { itemsRouter } from './routes/items.js';
-import { HttpError } from './lifecycle.js';
+import { inboxRouter } from './routes/inbox.js';
+import { HttpError } from './errors.js';
 
 // Short hints only: never echo the connection string
 function explainDbError(err) {
@@ -48,6 +49,7 @@ export function createApp({ db, corsOrigins, now }) {
 
   app.use('/api/segments', segmentsRouter({ db, now }));
   app.use('/api/home', homeRouter({ db, now }));
+  app.use('/api/inbox', inboxRouter({ db, now }));
   app.use('/api/items', itemsRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));

@@ -88,7 +88,7 @@ test('POST /api/items/:id/done updates the item and records who did it', async (
   assert.deepEqual(json, { id: ID, state: 'done' });
   const insert = db.calls.find(([sql]) => sql.includes('insert into item_events'));
   assert.equal(insert[1][2], 'completed');
-  assert.equal(insert[1][6], 'u1');
+  assert.equal(insert[1][7], 'u1');
 });
 
 test('lifecycle endpoints give plain errors', async () => {
@@ -102,4 +102,11 @@ test('lifecycle endpoints give plain errors', async () => {
   assert.match(bad.json.error, /date/);
   const broken = await post(active, `/api/items/${ID}/snooze`, '{nope');
   assert.equal(broken.status, 400);
+});
+
+test('a completion note is kept on the history entry, and waiting records who or what', () => {
+  assert.equal(plan('done', 'active', { note: '  Paid online  ' }).event.note, 'Paid online');
+  fails(() => plan('done', 'active', { note: 'x'.repeat(1001) }), 400);
+  assert.equal(plan('waiting', 'active', { waitingOn: 'Dr. Rao' }).event.note, 'Marked Waiting on Dr. Rao');
+  assert.equal(plan('waiting', 'active', {}).event.note, 'Marked Waiting');
 });

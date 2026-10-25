@@ -36,3 +36,5 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 
 export const apiGet = (path, options) => request(path, options);
 export const apiPost = (path, body = {}, options) => request(path, { ...options, method: 'POST', body });
+export const apiPatch = (path, body = {}, options) => request(path, { ...options, method: 'PATCH', body });
+export const apiDelete = (path, options) => request(path, { ...options, method: 'DELETE' });

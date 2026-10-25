@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dayHint, followUpOptions, longDate, shortDate, snoozeOptions } from '../src/lib/dates.js';
+import { dayHint, dueShortcuts, followUpOptions, longDate, shortDate, snoozeOptions } from '../src/lib/dates.js';
 import { removeAttentionRow } from '../src/lib/homeState.js';
 import { plural } from '../src/lib/text.js';
 
@@ -43,4 +43,13 @@ test('removing a row leaves the rest alone', () => {
 test('plural', () => {
   assert.equal(plural(1, 'item'), '1 item');
   assert.equal(plural(3, 'item'), '3 items');
+});
+
+test('due shortcuts offer Today, Tomorrow and the next Friday at least two days away', () => {
+  assert.deepEqual(
+    dueShortcuts('2026-10-20').map((o) => [o.label, o.date]),
+    [['Today', '2026-10-20'], ['Tomorrow', '2026-10-21'], ['Fri', '2026-10-23']]
+  );
+  assert.equal(dueShortcuts('2026-10-23')[2].date, '2026-10-30');
+  assert.equal(dueShortcuts('2026-10-25')[2].date, '2026-10-30');
 });
