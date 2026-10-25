@@ -36,6 +36,7 @@ test('GET /api/segments returns what the navigation needs', async () => {
   assert.equal(body.household.name, 'Our household');
   assert.equal(body.user.displayName, 'Chandra');
   assert.equal(body.inboxCount, 3);
+  assert.match(body.today, /^\d{4}-\d{2}-\d{2}$/);
   assert.deepEqual(body.segments.map((s) => [s.name, s.color, s.activeCount]), [
     ['Finances', 'emerald', 7],
     ['General / Administrative', 'slate', 2],

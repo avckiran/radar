@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ShellDataProvider } from './hooks/useShellData.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
+import { CaptureProvider } from './components/capture/CaptureProvider.jsx';
 import AppShell from './components/shell/AppShell.jsx';
 import Home from './pages/Home.jsx';
 import Inbox from './pages/Inbox.jsx';
@@ -14,18 +15,20 @@ export default function App() {
   return (
     <ToastProvider>
       <ShellDataProvider>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route index element={<Home />} />
-            <Route path="inbox" element={<Inbox />} />
-            <Route path="search" element={<Search />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="segments/:segmentId" element={<SegmentPage />} />
-            <Route path="dev/states" element={<DevStates />} />
-            <Route path="home" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+        <CaptureProvider>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<Home />} />
+              <Route path="inbox" element={<Inbox />} />
+              <Route path="search" element={<Search />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="segments/:segmentId" element={<SegmentPage />} />
+              <Route path="dev/states" element={<DevStates />} />
+              <Route path="home" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </CaptureProvider>
       </ShellDataProvider>
     </ToastProvider>
   );
