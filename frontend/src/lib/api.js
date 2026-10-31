@@ -37,4 +37,26 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 export const apiGet = (path, options) => request(path, options);
 export const apiPost = (path, body = {}, options) => request(path, { ...options, method: 'POST', body });
 export const apiPatch = (path, body = {}, options) => request(path, { ...options, method: 'PATCH', body });
-export const apiDelete = (path, options) => request(path, { ...options, method: 'DELETE' });
+export const apiDelete = (path, body, options) => request(path, { ...options, method: 'DELETE', body });
+
+// Fetches a file (the export) so it can be saved from the page
+export async function apiFile(path) {
+  if (!API_URL) throw new ApiError('Couldn’t reach the server.', { network: true });
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`);
+  } catch {
+    throw new ApiError('Couldn’t reach the server.', { network: true });
+  }
+  if (!res.ok) {
+    let message = 'Something went wrong on our side. Your items are safe.';
+    try {
+      message = (await res.json()).error || message;
+    } catch {
+      /* keep the default */
+    }
+    throw new ApiError(message, { status: res.status });
+  }
+  const named = /filename="?([^";]+)"?/i.exec(res.headers.get('Content-Disposition') || '');
+  return { blob: await res.blob(), filename: named ? named[1] : 'radar-export' };
+}

@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { getCurrentContext } from '../household.js';
 import { buildHome } from '../rules/home.js';
 import { COMPLETED_BY, ITEM_COLUMNS, ITEM_JOINS } from '../queries.js';
 
@@ -7,9 +6,7 @@ export function homeRouter({ db, now = () => new Date() }) {
   const router = Router();
 
   router.get('/', async (req, res) => {
-    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
-    const ctx = await getCurrentContext(db);
-    if (!ctx) return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
+    const ctx = req.ctx;
 
     const segments = await db.query(
       `select id, name, color from segments

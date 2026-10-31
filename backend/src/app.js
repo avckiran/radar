@@ -5,7 +5,9 @@ import { homeRouter } from './routes/home.js';
 import { itemsRouter } from './routes/items.js';
 import { inboxRouter } from './routes/inbox.js';
 import { searchRouter } from './routes/search.js';
+import { settingsRouter } from './routes/settings.js';
 import { HttpError } from './errors.js';
+import { contextMiddleware } from './context.js';
 
 // Short hints only: never echo the connection string
 function explainDbError(err) {
@@ -23,7 +25,7 @@ function explainDbError(err) {
 export function createApp({ db, corsOrigins, now }) {
   const app = express();
   app.disable('x-powered-by');
-  app.use(cors({ origin: corsOrigins }));
+  app.use(cors({ origin: corsOrigins, exposedHeaders: ['Content-Disposition'] }));
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/health', async (req, res) => {
@@ -48,11 +50,15 @@ export function createApp({ db, corsOrigins, now }) {
     res.status(database.ok ? 200 : 503).json({ status: database.ok ? 'ok' : 'degraded', database });
   });
 
+  // Task 9 replaces this with sign-in: every /api route gets its user and household from here
+  app.use('/api', contextMiddleware(db));
+
   app.use('/api/segments', segmentsRouter({ db, now }));
   app.use('/api/home', homeRouter({ db, now }));
   app.use('/api/inbox', inboxRouter({ db, now }));
   app.use('/api/items', itemsRouter({ db, now }));
   app.use('/api/search', searchRouter({ db, now }));
+  app.use('/api', settingsRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

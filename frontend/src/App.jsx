@@ -22,6 +22,7 @@ export default function App() {
               <Route path="inbox" element={<Inbox />} />
               <Route path="search" element={<Search />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="settings/:section" element={<Settings />} />
               <Route path="segments/:segmentId" element={<SegmentPage />} />
               <Route path="dev/states" element={<DevStates />} />
               <Route path="home" element={<Navigate to="/" replace />} />
