@@ -1,0 +1,128 @@
+.search {
+  max-width: 800px;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.search-field > svg {
+  position: absolute;
+  left: var(--space-12);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.search-input {
+  padding-left: 40px;
+}
+.search-keys {
+  flex: none;
+}
+.search-start {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.search-hint {
+  margin: 0;
+}
+.search-recent__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.search-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.search-recent__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  min-height: var(--target-min);
+  text-align: left;
+  color: var(--ink-2);
+}
+.search-recent__item:hover {
+  color: var(--ink);
+}
+.search-count {
+  margin: 0 0 var(--space-8);
+}
+.search-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.search-busy {
+  opacity: 0.6;
+}
+.search-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-16);
+}
+.search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+  width: 100%;
+  padding: var(--space-12);
+  text-align: left;
+}
+.search-result--active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.search-result__icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.search-result__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.search-result__title {
+  font-size: 15px;
+  line-height: 21px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.search-result__line {
+  overflow-wrap: anywhere;
+}
+.search-result__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.search-mark {
+  background: var(--soon-bg);
+  color: inherit;
+  font-weight: 700;
+  border-radius: 2px;
+}
+.search-link {
+  text-decoration: underline;
+}

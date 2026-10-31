@@ -4,6 +4,7 @@ import { segmentsRouter } from './routes/segments.js';
 import { homeRouter } from './routes/home.js';
 import { itemsRouter } from './routes/items.js';
 import { inboxRouter } from './routes/inbox.js';
+import { searchRouter } from './routes/search.js';
 import { HttpError } from './errors.js';
 
 // Short hints only: never echo the connection string
@@ -51,6 +52,7 @@ export function createApp({ db, corsOrigins, now }) {
   app.use('/api/home', homeRouter({ db, now }));
   app.use('/api/inbox', inboxRouter({ db, now }));
   app.use('/api/items', itemsRouter({ db, now }));
+  app.use('/api/search', searchRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
