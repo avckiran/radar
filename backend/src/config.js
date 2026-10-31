@@ -14,5 +14,13 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || '',
   // Number of proxies in front of the API (1 on most hosts) so the sign-in limit sees the real address
   trustProxy: Number.parseInt(process.env.TRUST_PROXY, 10) || 0,
+  // Daily digest email (Gmail: smtp.gmail.com with an app password). Leave SMTP_USER and SMTP_PASS empty to switch it off.
+  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+  smtpPort: Number(process.env.SMTP_PORT) || 465,
+  smtpUser: process.env.SMTP_USER || '',
+  smtpPass: process.env.SMTP_PASS || '',
+  mailFrom: process.env.MAIL_FROM || '',
+  // Where links in emails point: the address of the front end (GitHub Pages)
+  appUrl: process.env.APP_URL || 'http://localhost:5173',
   dbSslCaPath: process.env.DB_SSL_CA_PATH || '',
 };

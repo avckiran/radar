@@ -4,7 +4,9 @@ import { makeZip } from './zip.js';
 
 // Explicit column lists: nothing like password_hash can ever slip into an export.
 const USER_SQL = `select id, username, display_name, email, is_owner,
-                         to_char(digest_time, 'HH24:MI') as digest_time, created_at
+                         digest_enabled, digest_morning_enabled, to_char(digest_time, 'HH24:MI') as digest_morning_time,
+                         digest_afternoon_enabled, to_char(digest_afternoon_time, 'HH24:MI') as digest_afternoon_time,
+                         digest_evening_enabled, to_char(digest_evening_time, 'HH24:MI') as digest_evening_time, created_at
                     from users where household_id = $1 order by created_at, username`;
 const SEGMENT_SQL = `select s.id, s.name, s.color, s.sort_order, s.protected, s.allowed_kinds, s.created_at, s.deleted_at
                        from segments s where s.household_id = $1 order by s.deleted_at nulls first, s.sort_order, s.name`;
@@ -57,7 +59,7 @@ export function buildCsvFiles(data) {
     'items.csv': ['id', 'kind', 'state', 'title', 'segment', 'segmentId', 'body', 'url', 'description', 'dueDate', 'snoozedUntil', 'waitingOn', 'followUpDate', 'waitingSince', 'completedAt', 'createdBy', 'createdAt', 'updatedAt', 'deletedAt'],
     'history.csv': ['id', 'itemId', 'itemTitle', 'type', 'fromState', 'toState', 'note', 'data', 'actor', 'createdAt'],
     'segments.csv': ['id', 'name', 'color', 'sortOrder', 'protected', 'allowedKinds', 'createdAt', 'deletedAt'],
-    'users.csv': ['id', 'username', 'displayName', 'email', 'isOwner', 'digestTime', 'createdAt'],
+    'users.csv': ['id', 'username', 'displayName', 'email', 'isOwner', 'digestEnabled', 'digestMorningEnabled', 'digestMorningTime', 'digestAfternoonEnabled', 'digestAfternoonTime', 'digestEveningEnabled', 'digestEveningTime', 'createdAt'],
   };
   return Object.entries(sets).map(([name, rows]) => ({
     name,

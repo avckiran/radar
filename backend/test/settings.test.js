@@ -78,6 +78,54 @@ test('household settings are validated and saved', async () => {
   await call('PATCH', '/api/settings', { nudgeDays: 5, timeZone: 'America/New_York', digestTime: '08:00' });
 });
 
+test('the daily email can be switched off and on, and only with a real true or false', async () => {
+  const first = await call('GET', '/api/settings');
+  assert.equal(first.body.me.digestEnabled, true);
+  assert.equal(first.body.me.hasEmail, false);
+  const off = await call('PATCH', '/api/settings', { digestEnabled: false });
+  assert.equal(off.status, 200);
+  assert.equal(off.body.me.digestEnabled, false);
+  for (const bad of [{ digestEnabled: 'no' }, { digestEnabled: 0 }, { digestEnabled: null }]) {
+    assert.equal((await call('PATCH', '/api/settings', bad)).status, 400, JSON.stringify(bad));
+  }
+  const on = await call('PATCH', '/api/settings', { digestEnabled: true });
+  assert.equal(on.body.me.digestEnabled, true);
+});
+
+test('the three daily emails each have their own switch and time', async () => {
+  const first = (await call('GET', '/api/settings')).body.me.digestSlots;
+  assert.deepEqual(first, {
+    morning: { enabled: true, time: '08:00' },
+    afternoon: { enabled: true, time: '14:00' },
+    evening: { enabled: true, time: '18:00' },
+  });
+  const changed = await call('PATCH', '/api/settings', { digestSlots: { afternoon: { enabled: false }, evening: { time: '19:30' } } });
+  assert.equal(changed.status, 200);
+  assert.deepEqual(changed.body.me.digestSlots, {
+    morning: { enabled: true, time: '08:00' },
+    afternoon: { enabled: false, time: '14:00' },
+    evening: { enabled: true, time: '19:30' },
+  });
+  // the old morning field still works and stays in step
+  const morning = await call('PATCH', '/api/settings', { digestSlots: { morning: { time: '07:00' } } });
+  assert.equal(morning.body.me.digestTime, '07:00');
+  for (const bad of [
+    { digestSlots: { lunch: { enabled: true } } },
+    { digestSlots: { morning: { enabled: 'yes' } } },
+    { digestSlots: { morning: { time: '7am' } } },
+    { digestSlots: { evening: { time: '24:00' } } },
+    { digestSlots: [] },
+    { digestSlots: null },
+    { digestSlots: { morning: null } },
+  ]) {
+    assert.equal((await call('PATCH', '/api/settings', bad)).status, 400, JSON.stringify(bad));
+  }
+  // nothing half-saved by a bad request
+  assert.equal((await call('GET', '/api/settings')).body.me.digestSlots.evening.time, '19:30');
+  // put things back for the tests that follow
+  await call('PATCH', '/api/settings', { digestSlots: { morning: { time: '08:00' }, afternoon: { enabled: true }, evening: { time: '18:00' } } });
+});
+
 test('changing the nudge days changes what Home shows', async () => {
   const five = JSON.stringify((await call('GET', '/api/home')).body);
   await call('PATCH', '/api/settings', { nudgeDays: 1 });

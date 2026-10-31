@@ -19,7 +19,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 const SECTIONS = [
   { id: 'household', label: 'Household and members', icon: 'user' },
   { id: 'segments', label: 'Segments', icon: 'folder' },
-  { id: 'digest', label: 'Daily digest and nudges', icon: 'mail' },
+  { id: 'digest', label: 'Daily emails and nudges', icon: 'mail' },
   { id: 'data', label: 'Your data', icon: 'download' },
 ];
 

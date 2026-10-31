@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import SignIn from './pages/SignIn.jsx';
 import { CheckingScreen, UnreachableScreen } from './pages/AuthStates.jsx';
@@ -13,6 +13,12 @@ import Settings from './pages/Settings.jsx';
 import SegmentPage from './pages/SegmentPage.jsx';
 import DevStates from './pages/DevStates.jsx';
 import NotFound from './pages/NotFound.jsx';
+
+// Email links point at /items/<id>; send them to Home with that item open
+function ItemRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/?item=${encodeURIComponent(id)}`} replace />;
+}
 
 // Nothing below the gate loads any data until someone is signed in
 function Gate({ children }) {
@@ -39,6 +45,7 @@ export default function App() {
                   <Route path="settings/:section" element={<Settings />} />
                   <Route path="segments/:segmentId" element={<SegmentPage />} />
                   <Route path="dev/states" element={<DevStates />} />
+                  <Route path="items/:id" element={<ItemRedirect />} />
                   <Route path="home" element={<Navigate to="/" replace />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

@@ -377,3 +377,27 @@
   width: 100%;
   margin-top: var(--space-8);
 }
+
+.settings-check {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.settings-check:disabled {
+  cursor: default;
+}
+.settings-check-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 44px;
+}
+
+.digest-slot .settings-select {
+  width: auto;
+  min-width: 150px;
+}
+.digest-slot--off .settings-row__label {
+  color: var(--ink-3);
+}
