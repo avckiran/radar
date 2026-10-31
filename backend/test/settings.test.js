@@ -78,6 +78,20 @@ test('household settings are validated and saved', async () => {
   await call('PATCH', '/api/settings', { nudgeDays: 5, timeZone: 'America/New_York', digestTime: '08:00' });
 });
 
+test('the daily email can be switched off and on, and only with a real true or false', async () => {
+  const first = await call('GET', '/api/settings');
+  assert.equal(first.body.me.digestEnabled, true);
+  assert.equal(first.body.me.hasEmail, false);
+  const off = await call('PATCH', '/api/settings', { digestEnabled: false });
+  assert.equal(off.status, 200);
+  assert.equal(off.body.me.digestEnabled, false);
+  for (const bad of [{ digestEnabled: 'no' }, { digestEnabled: 0 }, { digestEnabled: null }]) {
+    assert.equal((await call('PATCH', '/api/settings', bad)).status, 400, JSON.stringify(bad));
+  }
+  const on = await call('PATCH', '/api/settings', { digestEnabled: true });
+  assert.equal(on.body.me.digestEnabled, true);
+});
+
 test('changing the nudge days changes what Home shows', async () => {
   const five = JSON.stringify((await call('GET', '/api/home')).body);
   await call('PATCH', '/api/settings', { nudgeDays: 1 });

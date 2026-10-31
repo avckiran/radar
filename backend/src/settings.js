@@ -19,7 +19,7 @@ export async function loadSettings(db, ctx) {
   const [household, me, members, segments, archived] = await Promise.all([
     db.query('select name, time_zone, nudge_days from households where id = $1', [ctx.householdId]),
     db.query(
-      `select id, username, display_name, is_owner, to_char(digest_time, 'HH24:MI') as digest_time
+      `select id, username, display_name, is_owner, email, digest_enabled, to_char(digest_time, 'HH24:MI') as digest_time
          from users where id = $1 and household_id = $2`,
       [ctx.user.id, ctx.householdId]
     ),
@@ -56,6 +56,8 @@ export async function loadSettings(db, ctx) {
       displayName: mine.display_name,
       isOwner: mine.is_owner,
       digestTime: mine.digest_time,
+      digestEnabled: mine.digest_enabled,
+      hasEmail: Boolean(mine.email),
     },
     members: members.rows.map((m) => ({
       id: m.id,
@@ -104,7 +106,12 @@ export async function updateSettings(db, ctx, input) {
     }
     digestTime = body.digestTime;
   }
-  if (Object.keys(hh).length === 0 && digestTime === null) throw new HttpError(400, 'Nothing to change.');
+  let digestEnabled = null;
+  if (has('digestEnabled')) {
+    if (typeof body.digestEnabled !== 'boolean') throw new HttpError(400, 'Choose on or off for the daily digest.');
+    digestEnabled = body.digestEnabled;
+  }
+  if (Object.keys(hh).length === 0 && digestTime === null && digestEnabled === null) throw new HttpError(400, 'Nothing to change.');
 
   await withTransaction(db, async (tx) => {
     const columns = Object.keys(hh);
@@ -118,6 +125,13 @@ export async function updateSettings(db, ctx, input) {
       await tx.query('update users set digest_time = $2, updated_at = now() where id = $1 and household_id = $3', [
         ctx.user.id,
         digestTime,
+        ctx.householdId,
+      ]);
+    }
+    if (digestEnabled !== null) {
+      await tx.query('update users set digest_enabled = $2, updated_at = now() where id = $1 and household_id = $3', [
+        ctx.user.id,
+        digestEnabled,
         ctx.householdId,
       ]);
     }

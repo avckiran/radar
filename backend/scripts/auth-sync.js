@@ -31,7 +31,7 @@ const client = await db.connect().catch((err) => {
 
 try {
   await client.query('begin');
-  const users = (await client.query('select id, username, password_hash from users order by created_at, username')).rows;
+  const users = (await client.query('select id, username, password_hash, email from users order by created_at, username')).rows;
 
   for (const user of users) {
     const wanted = RENAMES[user.username.toLowerCase()];
@@ -45,6 +45,17 @@ try {
 
   const results = [];
   for (const user of users) {
+    const emailName = `RADAR_EMAIL_${user.username.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+    const email = (process.env[emailName] || '').trim();
+    if (email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        results.push({ username: user.username, result: `${emailName} is not a valid address` });
+        process.exitCode = 1;
+      } else if ((user.email || '').toLowerCase() !== email.toLowerCase()) {
+        await client.query('update users set email = $2, updated_at = now() where id = $1', [user.id, email]);
+        results.push({ username: user.username, result: `email set (${email.replace(/^(.).*(@.*)$/, '$1***$2')})` });
+      }
+    }
     const name = `RADAR_PASSWORD_${user.username.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
     const password = process.env[name];
     if (!password) {

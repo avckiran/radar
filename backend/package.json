@@ -9,7 +9,10 @@
     "test": "node --test",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
-    "auth:sync": "node scripts/auth-sync.js"
+    "auth:sync": "node scripts/auth-sync.js",
+    "digest:preview": "node scripts/digest-preview.js",
+    "digest:send-test": "node scripts/digest-send.js",
+    "digest:colors": "node scripts/build-email-colors.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -18,6 +21,7 @@
     "express": "^5.3.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.3.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

@@ -53,6 +53,18 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
     </select>
   );
 
+  const onOff = (
+    <input
+      id="digest-enabled"
+      type="checkbox"
+      className="settings-check"
+      checked={me.digestEnabled !== false}
+      disabled={!canEdit}
+      onChange={(e) => onSave({ digestEnabled: e.target.checked }, e.target.checked ? 'Daily email turned on' : 'Daily email turned off')}
+    />
+  );
+  const noEmail = me.hasEmail === false;
+
   const stepper = (
     <Stepper
       label="Nudge Waiting items after"
@@ -68,11 +80,24 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
   return (
     <Group
       title="Daily digest and nudges"
-      note="The daily email itself is switched on in a later step. Your send time and time zone are saved now. Waiting items that pass the nudge limit show up as Needs attention on Home right away."
+      note={
+        noEmail
+          ? 'There is no email address on your account yet, so no daily email can be sent. It is set by the owner in the server settings.'
+          : 'One email a day at your send time, with what needs you. Waiting items that pass the nudge limit also show up as Needs attention on Home.'
+      }
     >
       <Card>
         {wide ? (
           <div className="settings-pad settings-fields">
+            <div className="settings-field">
+              <label className="rd-t-secondary rd-muted" htmlFor="digest-enabled">
+                Daily email
+              </label>
+              <span className="settings-check-line">
+                {onOff}
+                <span>{me.digestEnabled !== false ? 'On' : 'Off'}</span>
+              </span>
+            </div>
             <div className="settings-field">
               <label className="rd-t-secondary rd-muted" htmlFor="digest-time">
                 Send time
@@ -92,6 +117,12 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
           </div>
         ) : (
           <>
+            <div className="settings-row">
+              <label className="settings-row__label rd-fill" htmlFor="digest-enabled">
+                Daily email
+              </label>
+              {onOff}
+            </div>
             <div className="settings-row">
               <label className="settings-row__label rd-fill" htmlFor="digest-time">
                 Send time

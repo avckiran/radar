@@ -1,6 +1,8 @@
 import { config } from './config.js';
 import { createPool } from './db.js';
 import { createApp } from './app.js';
+import { createMailer } from './digest/mailer.js';
+import { createDigestRunner, startDigestScheduler } from './digest/scheduler.js';
 
 let db = null;
 if (config.databaseUrl) {
@@ -21,3 +23,12 @@ try {
   process.exit(1);
 }
 app.listen(config.port, () => console.log(`RADAR API listening on http://localhost:${config.port}`));
+
+// The daily digest runs inside this server: every 15 minutes it looks for anyone whose send time has passed
+const mailer = createMailer(config);
+if (db && mailer) {
+  startDigestScheduler(createDigestRunner({ db, mailer, appUrl: config.appUrl }));
+  console.log('Daily digest is on (checked every 15 minutes).');
+} else if (db) {
+  console.warn('Daily digest is off: set SMTP_USER and SMTP_PASS in backend/.env (see .env.example).');
+}
