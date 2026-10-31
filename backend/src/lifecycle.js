@@ -1,19 +1,10 @@
 import { withTransaction } from './db.js';
 import { isValidYmd, todayInZone } from './dates.js';
+import { HttpError, isUuid } from './errors.js';
 
-export class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
+export { HttpError, isUuid };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const ACTIONS = ['done', 'snooze', 'waiting', 'reopen'];
-
-export function isUuid(value) {
-  return typeof value === 'string' && UUID.test(value);
-}
 
 const CLEARED = { snoozed_until: null, waiting_on: null, follow_up_date: null, waiting_since: null };
 
@@ -28,9 +19,11 @@ export function planTransition(action, item, body, { now, timeZone }) {
 
   if (action === 'done') {
     if (item.kind !== 'action' || from === 'done') throw moved();
+    const note = typeof input.note === 'string' ? input.note.trim() : '';
+    if (note.length > 1000) throw new HttpError(400, 'Keep the note under 1000 characters.');
     return {
       patch: { ...CLEARED, state: 'done', completed_at: now },
-      event: { type: 'completed', from, to: 'done', data: {} },
+      event: { type: 'completed', from, to: 'done', note: note || null, data: {} },
     };
   }
 
@@ -53,7 +46,13 @@ export function planTransition(action, item, body, { now, timeZone }) {
     if (followUp !== null && followUp < today) throw new HttpError(400, 'Pick a follow-up date from today on.');
     return {
       patch: { ...CLEARED, state: 'waiting', waiting_on: waitingOn || null, follow_up_date: followUp, waiting_since: now },
-      event: { type: 'state_change', from, to: 'waiting', data: { waitingOn: waitingOn || null, followUp } },
+      event: {
+        type: 'state_change',
+        from,
+        to: 'waiting',
+        note: waitingOn ? `Marked Waiting on ${waitingOn}` : 'Marked Waiting',
+        data: { waitingOn: waitingOn || null, followUp },
+      },
     };
   }
 
@@ -98,9 +97,9 @@ export async function applyTransition(db, { householdId, actorId, itemId, action
       ]
     );
     await tx.query(
-      `insert into item_events (item_id, household_id, type, from_state, to_state, data, actor_id)
-       values ($1, $2, $3, $4, $5, $6, $7)`,
-      [itemId, householdId, event.type, event.from, event.to, JSON.stringify(event.data), actorId]
+      `insert into item_events (item_id, household_id, type, from_state, to_state, note, data, actor_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [itemId, householdId, event.type, event.from, event.to, event.note ?? null, JSON.stringify(event.data), actorId]
     );
     return { id: itemId, state: patch.state };
   });

@@ -14,6 +14,7 @@ import './styles/base.css';
 import './styles/shell.css';
 import './styles/home.css';
 import './styles/capture.css';
+import './styles/detail.css';
 
 import App from './App.jsx';
 

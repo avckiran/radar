@@ -6,10 +6,10 @@ export function ToastProvider({ children }) {
   const [message, setMessage] = useState(null);
   const timer = useRef(null);
 
-  const show = useCallback((text) => {
+  const show = useCallback((text, { action } = {}) => {
     clearTimeout(timer.current);
-    setMessage(text);
-    timer.current = setTimeout(() => setMessage(null), 2600);
+    setMessage({ text, action });
+    timer.current = setTimeout(() => setMessage(null), action ? 6000 : 2600);
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -18,7 +18,23 @@ export function ToastProvider({ children }) {
     <Ctx.Provider value={value}>
       {children}
       <div className="toast-host" role="status" aria-live="polite">
-        {message && <div className="rd-toast">{message}</div>}
+        {message && (
+          <div className="rd-toast">
+            <span>{message.text}</span>
+            {message.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={() => {
+                  setMessage(null);
+                  message.action.onClick();
+                }}
+              >
+                {message.action.label}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Ctx.Provider>
   );

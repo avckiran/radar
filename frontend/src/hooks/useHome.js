@@ -45,13 +45,33 @@ export function useHome() {
   }, [load]);
 
   const act = useCallback(
-    async (row, action, body, { success, optimistic = false } = {}) => {
+    async (row, action, body, { success, optimistic = false, undo = false } = {}) => {
       const before = state.data;
       setPending((p) => new Set(p).add(row.id));
       if (optimistic) setState((s) => ({ ...s, data: removeAttentionRow(s.data, row.id) }));
       try {
         await apiPost(`/api/items/${row.id}/${action}`, body);
-        if (success) toast.show(success);
+        if (success) {
+          toast.show(
+            success,
+            undo
+              ? {
+                  action: {
+                    label: 'Undo',
+                    onClick: async () => {
+                      try {
+                        await apiPost(`/api/items/${row.id}/reopen`, {});
+                      } catch (err) {
+                        toast.show(err.message);
+                      }
+                      load({ quiet: true });
+                      refreshShell();
+                    },
+                  },
+                }
+              : undefined
+          );
+        }
         return { ok: true };
       } catch (err) {
         if (optimistic) setState((s) => ({ ...s, data: before }));

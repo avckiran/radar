@@ -144,7 +144,7 @@ export function buildSeed({ now = new Date(), timeZone = 'America/New_York' } = 
     };
     items.push(item);
 
-    addEvent(item, { type: 'created', to: s.state === 'inbox' ? 'inbox' : 'active', by: s.by, at: createdAt });
+    addEvent(item, { type: 'created', to: s.state === 'inbox' ? 'inbox' : 'active', data: s.seg ? { segmentName: segments.find((x) => x.id === segId(s.seg))?.name } : {}, by: s.by, at: createdAt });
     if (s.state === 'waiting') {
       addEvent(item, { type: 'state_change', from: 'active', to: 'waiting', note: `Marked Waiting on ${s.waitingOn}`, by: s.by, at: item.waiting_since });
       for (const f of s.followUps) addEvent(item, { type: 'follow_up', note: f.note, by: f.by, at: ago(f.daysAgo) });

@@ -66,3 +66,13 @@ export function followUpOptions(today) {
     { key: 'one-week', label: 'In a week', date: addDays(today, 7) },
   ];
 }
+
+export function dueShortcuts(today) {
+  let friday = addDays(today, 2);
+  while (weekdayOf(friday) !== 5) friday = addDays(friday, 1);
+  return [
+    { key: 'today', label: 'Today', date: today },
+    { key: 'tomorrow', label: 'Tomorrow', date: addDays(today, 1) },
+    { key: 'friday', label: 'Fri', date: friday },
+  ];
+}

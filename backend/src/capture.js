@@ -1,6 +1,7 @@
 import { withTransaction } from './db.js';
 import { isValidYmd } from './dates.js';
-import { HttpError, isUuid } from './lifecycle.js';
+import { HttpError, isUuid } from './errors.js';
+import { findSegmentFor } from './segmentRules.js';
 
 export const LIMITS = { title: 300, body: 20000, description: 1000, url: 2000 };
 const KINDS = ['action', 'note', 'link'];
@@ -96,15 +97,7 @@ export async function createItem(db, { householdId, actorId }, input) {
   return withTransaction(db, async (tx) => {
     let segment = null;
     if (item.segmentId) {
-      const found = await tx.query(
-        'select id, name, allowed_kinds from segments where id = $1 and household_id = $2 and deleted_at is null',
-        [item.segmentId, householdId]
-      );
-      segment = found.rows[0];
-      if (!segment) throw new HttpError(400, 'That segment doesn’t exist.');
-      if (!segment.allowed_kinds.includes(item.kind)) {
-        throw new HttpError(400, `${segment.name} doesn’t take ${item.kind === 'action' ? 'actions' : `${item.kind}s`}.`);
-      }
+      segment = await findSegmentFor(tx, householdId, item.segmentId, item.kind);
     }
     const state = segment ? 'active' : 'inbox';
     const inserted = await tx.query(
@@ -116,8 +109,8 @@ export async function createItem(db, { householdId, actorId }, input) {
     );
     if (inserted.rows[0]) {
       await tx.query(
-        `insert into item_events (item_id, household_id, type, to_state, actor_id) values ($1, $2, 'created', $3, $4)`,
-        [item.id, householdId, state, actorId]
+        `insert into item_events (item_id, household_id, type, to_state, actor_id, data) values ($1, $2, 'created', $3, $4, $5)`,
+        [item.id, householdId, state, actorId, JSON.stringify({ segmentName: segment?.name ?? null })]
       );
       return { created: true, item: inserted.rows[0], segmentName: segment?.name ?? null };
     }
