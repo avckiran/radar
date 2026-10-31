@@ -1,14 +1,11 @@
 import { Router } from 'express';
-import { getCurrentContext } from '../household.js';
 import { buildInbox } from '../rules/inbox.js';
 
 export function inboxRouter({ db, now = () => new Date() }) {
   const router = Router();
 
   router.get('/', async (req, res) => {
-    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
-    const ctx = await getCurrentContext(db);
-    if (!ctx) return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
+    const ctx = req.ctx;
     const result = await db.query(
       `select i.id, i.kind, i.title, i.url, i.created_at, u.display_name as creator
          from items i

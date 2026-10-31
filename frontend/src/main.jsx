@@ -15,6 +15,9 @@ import './styles/shell.css';
 import './styles/home.css';
 import './styles/capture.css';
 import './styles/detail.css';
+import './styles/search.css';
+import './styles/settings.css';
+import './styles/signin.css';
 
 import App from './App.jsx';
 

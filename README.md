@@ -11,7 +11,8 @@ A shared household web app that keeps the things you must not forget in one plac
 2. `npm install` (once, from this folder; installs both apps).
 3. `cp backend/.env.example backend/.env`, then put your Supabase Session pooler connection string in `backend/.env`.
 4. `npm run db:migrate` (creates the tables) and `npm run db:seed` (loads sample data). Both are safe to run again.
-5. `npm run dev`, then open http://localhost:5173
-6. `npm test` runs the tests for both apps.
+5. Sign-in: in `backend/.env` set `JWT_SECRET` (long and random, see the comment in `.env.example`) and the two passwords `RADAR_PASSWORD_AVCKIRAN` and `RADAR_PASSWORD_KOARORA6` (at least 10 characters each). Then run `npm run auth:sync -w backend`. Run it again whenever you change a password; it also signs that person out everywhere.
+6. `npm run dev`, then open http://localhost:5173 and sign in.
+7. `npm test` runs the tests for both apps.
 
 Secrets live only in `backend/.env`, which Git ignores. The repo is public, so never put secrets, passwords or personal data in any committed file.

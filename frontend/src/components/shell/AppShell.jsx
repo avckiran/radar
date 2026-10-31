@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import BottomBar from './BottomBar.jsx';
 import MenuSheet from './MenuSheet.jsx';
@@ -13,6 +13,22 @@ export default function AppShell() {
   const online = useOnline();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+      const target = e.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      e.preventDefault();
+      if (location.pathname === '/search') document.getElementById('search-input')?.focus();
+      else navigate('/search');
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [navigate, location.pathname]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);

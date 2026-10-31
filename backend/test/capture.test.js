@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 import { domainOf, normalizeUrl, validateCapture } from '../src/capture.js';
 import { HttpError } from '../src/lifecycle.js';
 
@@ -75,7 +76,7 @@ function fakeDb({ segment = { id: SEG, name: 'Finances', allowed_kinds: ['action
 }
 
 async function post(db, body) {
-  const app = createApp({ db, corsOrigins: [] });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: [] });
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const res = await fetch(`http://localhost:${server.address().port}/api/items`, {
     method: 'POST',

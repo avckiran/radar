@@ -1,19 +1,15 @@
 import { Router } from 'express';
-import { getCurrentContext } from '../household.js';
 import { todayInZone } from '../dates.js';
 import { HttpError, isUuid } from '../errors.js';
 import { COMPLETED_BY, ITEM_COLUMNS, ITEM_JOINS } from '../queries.js';
+import { createSegment, deleteSegment, reorderSegments, updateSegment } from '../segmentAdmin.js';
 import { buildSegmentView, doneRows, DONE_PAGE } from '../rules/segmentView.js';
 
 export function segmentsRouter({ db, now = () => new Date() }) {
   const router = Router();
 
   router.get('/', async (req, res) => {
-    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
-    const ctx = await getCurrentContext(db);
-    if (!ctx) {
-      return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
-    }
+    const ctx = req.ctx;
     const segments = await db.query(
       `select s.id, s.name, s.color, s.sort_order as "sortOrder", s.protected,
               count(i.id) filter (
@@ -41,6 +37,23 @@ export function segmentsRouter({ db, now = () => new Date() }) {
     });
   });
 
+  router.post('/', async (req, res) => {
+    res.status(201).json(await createSegment(db, req.ctx, req.body));
+  });
+
+  router.post('/reorder', async (req, res) => {
+    res.json(await reorderSegments(db, req.ctx, req.body));
+  });
+
+  router.patch('/:id', async (req, res) => {
+    res.json(await updateSegment(db, req.ctx, req.params.id, req.body));
+  });
+
+  router.delete('/:id', async (req, res) => {
+    const ctx = req.ctx;
+    res.json(await deleteSegment(db, { householdId: ctx.householdId, actorId: ctx.user.id }, req.params.id, req.body));
+  });
+
   async function loadSegment(ctx, id) {
     if (!isUuid(id)) throw new HttpError(404, 'Segment not found.');
     const found = await db.query(
@@ -52,9 +65,7 @@ export function segmentsRouter({ db, now = () => new Date() }) {
   }
 
   router.get('/:id', async (req, res) => {
-    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
-    const ctx = await getCurrentContext(db);
-    if (!ctx) return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
+    const ctx = req.ctx;
     const segment = await loadSegment(ctx, req.params.id);
     const params = [segment.id, ctx.householdId];
     const open = await db.query(
@@ -92,9 +103,7 @@ export function segmentsRouter({ db, now = () => new Date() }) {
   });
 
   router.get('/:id/done', async (req, res) => {
-    if (!db) return res.status(503).json({ error: 'The database is not configured.' });
-    const ctx = await getCurrentContext(db);
-    if (!ctx) return res.status(503).json({ error: 'No household yet. Run: npm run db:migrate, then npm run db:seed' });
+    const ctx = req.ctx;
     const segment = await loadSegment(ctx, req.params.id);
     const offset = Math.max(0, Math.min(100000, Number.parseInt(req.query.offset, 10) || 0));
     const rows = await db.query(

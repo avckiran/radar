@@ -4,7 +4,11 @@ import { segmentsRouter } from './routes/segments.js';
 import { homeRouter } from './routes/home.js';
 import { itemsRouter } from './routes/items.js';
 import { inboxRouter } from './routes/inbox.js';
+import { searchRouter } from './routes/search.js';
+import { settingsRouter } from './routes/settings.js';
 import { HttpError } from './errors.js';
+import helmet from 'helmet';
+import { createAuth } from './auth.js';
 
 // Short hints only: never echo the connection string
 function explainDbError(err) {
@@ -19,10 +23,21 @@ function explainDbError(err) {
   return `Database error${code ? ` (code ${code})` : ''}. See the API console for details.`;
 }
 
-export function createApp({ db, corsOrigins, now }) {
+// `authenticate` can be replaced in tests; real use always goes through sign-in (jwtSecret)
+export function createApp({ db, corsOrigins, now, jwtSecret, trustProxy = 0, authenticate }) {
   const app = express();
   app.disable('x-powered-by');
-  app.use(cors({ origin: corsOrigins }));
+  if (trustProxy) app.set('trust proxy', trustProxy);
+  app.use(helmet());
+  app.use(
+    cors({
+      origin: corsOrigins,
+      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['Content-Disposition', 'Retry-After'],
+      maxAge: 600,
+    })
+  );
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/health', async (req, res) => {
@@ -47,10 +62,30 @@ export function createApp({ db, corsOrigins, now }) {
     res.status(database.ok ? 200 : 503).json({ status: database.ok ? 'ok' : 'degraded', database });
   });
 
+  // Everything under /api needs sign-in except the sign-in call itself
+  app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
+  const unavailable = (req, res) => res.status(503).json({ error: 'The database is not configured.' });
+  const auth = db && !authenticate ? createAuth({ db, secret: jwtSecret, now }) : null;
+  if (!db) {
+    app.use('/api', unavailable);
+  } else {
+    if (auth) {
+      app.post('/api/auth/login', auth.login);
+      app.post('/api/auth/logout', auth.authenticate, auth.logout);
+      app.get('/api/auth/me', auth.authenticate, auth.me);
+    }
+    app.use('/api', authenticate ?? auth.authenticate);
+  }
+
   app.use('/api/segments', segmentsRouter({ db, now }));
   app.use('/api/home', homeRouter({ db, now }));
   app.use('/api/inbox', inboxRouter({ db, now }));
   app.use('/api/items', itemsRouter({ db, now }));
+  app.use('/api/search', searchRouter({ db, now }));
+  app.use('/api', settingsRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
