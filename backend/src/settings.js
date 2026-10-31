@@ -5,6 +5,14 @@ import { SEGMENT_COLORS } from './segmentColors.js';
 const NAME_MAX = 60;
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+// The three daily emails. Morning keeps the original digest_time column.
+export const SLOTS = ['morning', 'afternoon', 'evening'];
+const SLOT_COLUMNS = {
+  morning: { enabled: 'digest_morning_enabled', time: 'digest_time' },
+  afternoon: { enabled: 'digest_afternoon_enabled', time: 'digest_afternoon_time' },
+  evening: { enabled: 'digest_evening_enabled', time: 'digest_evening_time' },
+};
+
 export function validTimeZone(zone) {
   if (typeof zone !== 'string' || zone.length > 64 || !/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(zone)) return false;
   try {
@@ -19,7 +27,10 @@ export async function loadSettings(db, ctx) {
   const [household, me, members, segments, archived] = await Promise.all([
     db.query('select name, time_zone, nudge_days from households where id = $1', [ctx.householdId]),
     db.query(
-      `select id, username, display_name, is_owner, email, digest_enabled, to_char(digest_time, 'HH24:MI') as digest_time
+      `select id, username, display_name, is_owner, email, digest_enabled,
+              digest_morning_enabled, to_char(digest_time, 'HH24:MI') as digest_time,
+              digest_afternoon_enabled, to_char(digest_afternoon_time, 'HH24:MI') as digest_afternoon_time,
+              digest_evening_enabled, to_char(digest_evening_time, 'HH24:MI') as digest_evening_time
          from users where id = $1 and household_id = $2`,
       [ctx.user.id, ctx.householdId]
     ),
@@ -57,6 +68,11 @@ export async function loadSettings(db, ctx) {
       isOwner: mine.is_owner,
       digestTime: mine.digest_time,
       digestEnabled: mine.digest_enabled,
+      digestSlots: {
+        morning: { enabled: mine.digest_morning_enabled, time: mine.digest_time },
+        afternoon: { enabled: mine.digest_afternoon_enabled, time: mine.digest_afternoon_time },
+        evening: { enabled: mine.digest_evening_enabled, time: mine.digest_evening_time },
+      },
       hasEmail: Boolean(mine.email),
     },
     members: members.rows.map((m) => ({
@@ -99,19 +115,31 @@ export async function updateSettings(db, ctx, input) {
     if (!Number.isInteger(n) || n < 1 || n > 60) throw new HttpError(400, 'Nudge after a whole number of days from 1 to 60.');
     hh.nudge_days = n;
   }
-  let digestTime = null;
-  if (has('digestTime')) {
-    if (typeof body.digestTime !== 'string' || !HHMM.test(body.digestTime)) {
-      throw new HttpError(400, 'Pick a send time like 08:00.');
-    }
-    digestTime = body.digestTime;
-  }
-  let digestEnabled = null;
+  // Everything that lives on the person's own row: column name -> new value
+  const mine = {};
+  const pickTime = (value) => {
+    if (typeof value !== 'string' || !HHMM.test(value)) throw new HttpError(400, 'Pick a send time like 08:00.');
+    return value;
+  };
+  if (has('digestTime')) mine[SLOT_COLUMNS.morning.time] = pickTime(body.digestTime);
   if (has('digestEnabled')) {
     if (typeof body.digestEnabled !== 'boolean') throw new HttpError(400, 'Choose on or off for the daily digest.');
-    digestEnabled = body.digestEnabled;
+    mine.digest_enabled = body.digestEnabled;
   }
-  if (Object.keys(hh).length === 0 && digestTime === null && digestEnabled === null) throw new HttpError(400, 'Nothing to change.');
+  if (has('digestSlots')) {
+    const slots = body.digestSlots;
+    if (slots === null || typeof slots !== 'object' || Array.isArray(slots)) throw new HttpError(400, 'Choose the emails to send.');
+    for (const [name, change] of Object.entries(slots)) {
+      if (!SLOTS.includes(name)) throw new HttpError(400, `There is no "${name}" email. Choose morning, afternoon or evening.`);
+      if (change === null || typeof change !== 'object' || Array.isArray(change)) throw new HttpError(400, 'Choose on or off and a time.');
+      if ('enabled' in change) {
+        if (typeof change.enabled !== 'boolean') throw new HttpError(400, `Choose on or off for the ${name} email.`);
+        mine[SLOT_COLUMNS[name].enabled] = change.enabled;
+      }
+      if ('time' in change) mine[SLOT_COLUMNS[name].time] = pickTime(change.time);
+    }
+  }
+  if (Object.keys(hh).length === 0 && Object.keys(mine).length === 0) throw new HttpError(400, 'Nothing to change.');
 
   await withTransaction(db, async (tx) => {
     const columns = Object.keys(hh);
@@ -121,19 +149,12 @@ export async function updateSettings(db, ctx, input) {
         [ctx.householdId, ...columns.map((c) => hh[c])]
       );
     }
-    if (digestTime !== null) {
-      await tx.query('update users set digest_time = $2, updated_at = now() where id = $1 and household_id = $3', [
-        ctx.user.id,
-        digestTime,
-        ctx.householdId,
-      ]);
-    }
-    if (digestEnabled !== null) {
-      await tx.query('update users set digest_enabled = $2, updated_at = now() where id = $1 and household_id = $3', [
-        ctx.user.id,
-        digestEnabled,
-        ctx.householdId,
-      ]);
+    const own = Object.keys(mine);
+    if (own.length) {
+      await tx.query(
+        `update users set ${own.map((c, i) => `${c} = $${i + 3}`).join(', ')}, updated_at = now() where id = $1 and household_id = $2`,
+        [ctx.user.id, ctx.householdId, ...own.map((c) => mine[c])]
+      );
     }
   });
   return loadSettings(db, { ...ctx, ...(hh.name ? { householdName: hh.name } : {}) });

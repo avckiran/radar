@@ -38,10 +38,16 @@ before(async () => {
   db = { query: (s, p) => pg.query(s, p) };
 });
 
-// Fresh start for every test: both people can get email at 8:00, the log is empty
+// Fresh start for every test: both people can get the morning email at 8:00 (afternoon and evening are off unless a test
+// turns them on), the log is empty
 beforeEach(async () => {
   await pg.query('delete from digest_log');
-  await pg.query(`update users set email = username || '@example.com', digest_enabled = true, digest_time = '08:00'`);
+  await pg.query(
+    `update users set email = username || '@example.com', digest_enabled = true,
+            digest_morning_enabled = true, digest_time = '08:00',
+            digest_afternoon_enabled = false, digest_afternoon_time = '14:00',
+            digest_evening_enabled = false, digest_evening_time = '18:00'`
+  );
   await pg.query(`update households set time_zone = 'America/New_York'`);
 });
 
@@ -214,4 +220,120 @@ test('the scheduler start function runs a check and can be stopped', async () =>
   assert.ok(seen >= 2);
   await new Promise((r) => setTimeout(r, 60));
   assert.equal(ticks, seen);
+});
+
+// ---- three emails a day ----
+const allOn = () => pg.query('update users set digest_afternoon_enabled = true, digest_evening_enabled = true');
+const slotRows = async () => (await pg.query(`select u.username, d.slot, d.status from digest_log d join users u on u.id = d.user_id order by u.username, d.slot`)).rows;
+
+// Takes every item off the list for the duration of a test, then puts things back
+async function withEmptyList(fn) {
+  const saved = (await pg.query('select id, deleted_at from items')).rows;
+  await pg.query('update items set deleted_at = now()');
+  try {
+    await fn();
+  } finally {
+    for (const r of saved) await pg.query('update items set deleted_at = $2 where id = $1', [r.id, r.deleted_at]);
+  }
+}
+
+test('afternoon and evening emails arrive at their own times, and say which one they are', async () => {
+  await allOn();
+  const mail = fakeMailer();
+  await runner(mail, '2026-10-27T12:05:00Z').tick(); // 8:05 AM
+  assert.equal(mail.sent.length, 2);
+  await runner(mail, '2026-10-27T17:59:00Z').tick(); // 1:59 PM: not yet
+  assert.equal(mail.sent.length, 2);
+  await runner(mail, '2026-10-27T18:05:00Z').tick(); // 2:05 PM
+  assert.equal(mail.sent.length, 4);
+  assert.match(mail.sent[2].subject, /^Afternoon: /);
+  await runner(mail, '2026-10-27T22:05:00Z').tick(); // 6:05 PM
+  assert.equal(mail.sent.length, 6);
+  assert.match(mail.sent[4].subject, /^Evening: /);
+  assert.doesNotMatch(mail.sent[0].subject, /^(Morning|Afternoon|Evening): /);
+  assert.equal((await slotRows()).filter((r) => r.status === 'sent').length, 6);
+  assert.match(mail.sent[0].text, /You get these emails at 8:00 AM, 2:00 PM and 6:00 PM Eastern/);
+});
+
+test('each of the three is sent once a day, even after a restart', async () => {
+  await allOn();
+  const mail = fakeMailer();
+  for (const t of ['12:05', '12:20', '18:05', '18:20', '22:05', '22:20', '23:50']) await runner(mail, `2026-10-27T${t}:00Z`).tick();
+  assert.equal(mail.sent.length, 6);
+});
+
+test('each email can be turned off on its own, and the master switch turns off all three', async () => {
+  await pg.query(`update users set digest_afternoon_enabled = true, digest_evening_enabled = true, digest_morning_enabled = false where username = 'avckiran'`);
+  await pg.query(`update users set digest_afternoon_enabled = false, digest_evening_enabled = true where username = 'koarora6'`);
+  const mail = fakeMailer();
+  await runner(mail, '2026-10-27T12:05:00Z').tick();
+  await runner(mail, '2026-10-27T18:05:00Z').tick();
+  await runner(mail, '2026-10-27T22:05:00Z').tick();
+  const got = (await slotRows()).map((r) => `${r.username}:${r.slot}`);
+  assert.deepEqual(got, ['avckiran:afternoon', 'avckiran:evening', 'koarora6:evening', 'koarora6:morning']);
+  const chandra = mail.sent.find((m) => m.to === 'avckiran@example.com');
+  assert.match(chandra.text, /You get these emails at 2:00 PM and 6:00 PM Eastern/);
+  const komal = mail.sent.find((m) => m.to === 'koarora6@example.com');
+  assert.match(komal.text, /You get these emails at 8:00 AM and 6:00 PM Eastern/);
+  await pg.query('delete from digest_log');
+  await pg.query('update users set digest_enabled = false');
+  const none = fakeMailer();
+  await runner(none, '2026-10-28T23:00:00Z').tick();
+  assert.equal(none.sent.length, 0);
+});
+
+test('afternoon and evening times are changed independently', async () => {
+  await allOn();
+  await pg.query(`update users set digest_afternoon_time = '15:30', digest_evening_time = '20:00'`);
+  const mail = fakeMailer();
+  await runner(mail, '2026-10-27T12:05:00Z').tick(); // 8:05 AM: morning
+  assert.equal(mail.sent.length, 2);
+  await runner(mail, '2026-10-27T18:05:00Z').tick(); // 2:05 PM: afternoon is at 3:30, so nothing new
+  assert.equal(mail.sent.length, 2);
+  await runner(mail, '2026-10-27T19:30:00Z').tick(); // 3:30 PM
+  assert.equal(mail.sent.length, 4);
+  await runner(mail, '2026-10-27T22:30:00Z').tick(); // 6:30 PM: evening is at 8
+  assert.equal(mail.sent.length, 4);
+  await runner(mail, '2026-10-28T00:00:00Z').tick(); // 8:00 PM
+  assert.equal(mail.sent.length, 6);
+});
+
+test('afternoon and evening are skipped (and logged) when nothing needs attention; the morning email still comes', async () => {
+  await allOn();
+  await withEmptyList(async () => {
+    const mail = fakeMailer();
+    const m = await runner(mail, '2026-10-27T12:05:00Z').tick();
+    assert.equal(m.sent, 2);
+    assert.match(mail.sent[0].text, /Nothing on the list today/);
+    const a = await runner(mail, '2026-10-27T18:05:00Z').tick();
+    assert.equal(a.quiet, 2);
+    await runner(mail, '2026-10-27T22:05:00Z').tick();
+    assert.equal(mail.sent.length, 2, 'no afternoon or evening email');
+    const rows = await slotRows();
+    assert.equal(rows.filter((r) => r.status === 'quiet').length, 4);
+    // a quiet slot is not looked at again, even if something shows up later that day
+    await pg.query('update items set deleted_at = null');
+    await runner(mail, '2026-10-27T22:20:00Z').tick();
+    assert.equal(mail.sent.length, 2);
+  });
+});
+
+test('being late is judged per email: the morning one is skipped but the afternoon one still goes', async () => {
+  await allOn();
+  const mail = fakeMailer();
+  const r = await runner(mail, '2026-10-27T20:30:00Z').tick(); // 4:30 PM: morning is 8.5 hours late, afternoon 2.5
+  assert.equal(r.skipped, 2 + 0); // morning x 2 people
+  assert.equal(mail.sent.length, 2);
+  assert.ok(mail.sent.every((m) => /^Afternoon: /.test(m.subject)));
+  const rows = await slotRows();
+  assert.equal(rows.find((x) => x.slot === 'morning').status, 'skipped');
+});
+
+test('days from before the three-email change count as the morning email', async () => {
+  const user = (await pg.query(`select id from users where username = 'avckiran'`)).rows[0].id;
+  await pg.query(`insert into digest_log (user_id, local_date, status, attempts) values ($1, '2026-10-20', 'sent', 1)`, [user]);
+  assert.equal((await pg.query(`select slot from digest_log where user_id = $1`, [user])).rows[0].slot, 'morning');
+  // and a morning and an afternoon row can share a day
+  await pg.query(`insert into digest_log (user_id, local_date, slot, status, attempts) values ($1, '2026-10-20', 'afternoon', 'sent', 1)`, [user]);
+  await assert.rejects(pg.query(`insert into digest_log (user_id, local_date, slot, status, attempts) values ($1, '2026-10-20', 'afternoon', 'sent', 1)`, [user]));
 });

@@ -12,10 +12,10 @@ import { buildEmailColors } from '../scripts/build-email-colors.mjs';
 const APP_URL = 'https://example.github.io/radar';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-function model(variant, tweak) {
+function model(variant, tweak, extra = {}) {
   const { now, data } = sampleInputs(variant);
   const d = tweak ? tweak(structuredClone(data)) : data;
-  return buildDigest({ ...d, user: SAMPLE_USER, household: SAMPLE_HOUSEHOLD, now, appUrl: APP_URL });
+  return buildDigest({ ...d, user: SAMPLE_USER, household: SAMPLE_HOUSEHOLD, now, appUrl: APP_URL, ...extra });
 }
 
 test('the three variants are picked by what is on the list', () => {
@@ -108,4 +108,29 @@ test('the HTML has a dark-mode block and no unreplaced placeholders', () => {
 test('the email colors copy matches the design tokens', () => {
   const tokens = JSON.parse(fs.readFileSync(path.join(here, '..', '..', 'frontend', 'design', 'tokens.json'), 'utf8'));
   assert.deepEqual(EMAIL_COLORS, buildEmailColors(tokens), 'Run: npm run digest:colors -w backend');
+});
+
+test('afternoon and evening emails name themselves; the morning one does not', () => {
+  assert.match(model('normal').subject, /^4 things need you/);
+  assert.match(model('normal', null, { slot: 'afternoon' }).subject, /^Afternoon: 4 things need you this week$/);
+  assert.match(model('normal', null, { slot: 'evening' }).subject, /^Evening: /);
+  assert.match(model('normal').intro, /^Here’s what needs you today/);
+  assert.match(model('normal', null, { slot: 'afternoon' }).intro, /^Here’s what still needs you today/);
+  assert.match(model('allclear', null, { slot: 'evening' }).subject, /^Evening: All clear/);
+});
+
+test('needsYou counts overdue, due this week and waiting nudges, so quiet days can be spotted', () => {
+  assert.equal(model('normal').needsYou, 4);
+  assert.equal(model('allclear').needsYou, 1);
+  assert.equal(model('empty').needsYou, 0);
+});
+
+test('the footer lists every time the person gets an email', () => {
+  const three = renderEmail(model('normal'));
+  assert.match(three.text, /You get this email at 8:00 AM Eastern/);
+  const { now, data } = sampleInputs('normal');
+  const m = buildDigest({ ...data, user: { ...SAMPLE_USER, sendTimes: ['08:00', '14:00', '18:00'] }, household: SAMPLE_HOUSEHOLD, now, appUrl: APP_URL });
+  const email = renderEmail(m);
+  assert.match(email.text, /You get these emails at 8:00 AM, 2:00 PM and 6:00 PM Eastern/);
+  assert.match(email.html, /You get these emails at 8:00 AM, 2:00 PM and 6:00 PM Eastern/);
 });

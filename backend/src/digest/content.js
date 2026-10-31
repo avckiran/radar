@@ -1,14 +1,14 @@
 import { addDays, endOfWeek, todayInZone } from '../dates.js';
 import { needsAttention, waitingAgeDays } from '../rules/needsAttention.js';
 import { nextUp } from '../rules/home.js';
-import { dateLabel, firstName, greetingFor, joinUrl, sendLabel, shortSegment } from './labels.js';
+import { SLOT_NAMES, dateLabel, firstName, greetingFor, joinUrl, sendLabel, sendTimesLabel, shortSegment } from './labels.js';
 
 const NEXT_WEEK_MAX = 5;
 const FINISHED_SHOWN = 4;
 const SECTION_MAX = 15;
 
 // Everything the three templates need, worked out once. The rules for "what needs you" are the same module Home uses.
-export function buildDigest({ openItems, doneItems, inboxCount, user, household, now, appUrl }) {
+export function buildDigest({ openItems, doneItems, inboxCount, user, household, now, appUrl, slot = 'morning' }) {
   const { timeZone, nudgeDays } = household;
   const today = todayInZone(now, timeZone);
   const weekEnd = endOfWeek(today);
@@ -28,7 +28,11 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
     .map((i) => i.title);
 
   const link = (path = '') => joinUrl(appUrl, path);
+  // Afternoon and evening emails say which one they are, so the three are easy to tell apart
+  const withSlot = (subject) => (slot === 'morning' ? subject : `${SLOT_NAMES[slot]}: ${subject}`);
   const model = {
+    slot,
+    needsYou: overdue.length + thisWeek.length + waiting.length,
     name: firstName(user.displayName),
     greeting: greetingFor(now, timeZone),
     dateLabel: dateLabel(now, timeZone),
@@ -40,7 +44,8 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
     footer: {
       email: user.email,
       household: household.name,
-      sendLabel: sendLabel(user.digestTime, timeZone),
+      sendLabel: user.sendTimes?.length ? sendTimesLabel(user.sendTimes, timeZone) : sendLabel(user.digestTime, timeZone),
+      sendCount: user.sendTimes?.length ?? 1,
     },
   };
 
@@ -55,9 +60,9 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
     return {
       ...model,
       variant: 'normal',
-      subject: `${needing === 1 ? '1 thing needs' : `${needing} things need`} you this week`,
+      subject: withSlot(`${needing === 1 ? '1 thing needs' : `${needing} things need`} you this week`),
       preheader: bits.join(' · '),
-      intro: today === weekEnd ? 'Here’s what needs you today.' : 'Here’s what needs you today and through Saturday.',
+      intro: `Here’s what ${slot === 'morning' ? '' : 'still '}needs you today${today === weekEnd ? '.' : ' and through Saturday.'}`,
       overdue: overdue.slice(0, SECTION_MAX),
       overdueMore: Math.max(0, overdue.length - SECTION_MAX),
       thisWeek: thisWeek.slice(0, SECTION_MAX),
@@ -81,7 +86,7 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
     return {
       ...model,
       variant: 'allclear',
-      subject: 'All clear for the week',
+      subject: withSlot('All clear for the week'),
       preheader: 'You finished everything due before Saturday.',
       finished: { titles: finishedTitles.slice(0, FINISHED_SHOWN), more: Math.max(0, finishedTitles.length - FINISHED_SHOWN) },
       looseEnds,
@@ -91,7 +96,7 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
   return {
     ...model,
     variant: 'empty',
-    subject: 'Nothing on the list today',
+    subject: withSlot('Nothing on the list today'),
     preheader: 'Enjoy the day.',
     looseEnds,
   };

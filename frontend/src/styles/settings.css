@@ -393,3 +393,11 @@
   gap: var(--space-8);
   min-height: 44px;
 }
+
+.digest-slot .settings-select {
+  width: auto;
+  min-width: 150px;
+}
+.digest-slot--off .settings-row__label {
+  color: var(--ink-3);
+}

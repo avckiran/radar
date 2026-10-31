@@ -28,6 +28,16 @@ try {
   process.exit(1);
 }
 
+// --slot afternoon (or evening) shows how that email is worded; the default is morning
+const slotArg = process.argv.includes('--slot') ? process.argv[process.argv.indexOf('--slot') + 1] : 'morning';
+if (!['morning', 'afternoon', 'evening'].includes(slotArg)) {
+  console.error('--slot must be morning, afternoon or evening.');
+  process.exit(1);
+}
+const slot = slotArg;
+
+const sendTimesOf = (p) => ['morning', 'afternoon', 'evening'].filter((n) => p[`digest_${n}_enabled`]).map((n) => p[`${n}_time`]);
+
 let db;
 try {
   if (sample) {
@@ -37,7 +47,7 @@ try {
     }
     for (const variant of SAMPLE_VARIANTS) {
       const { data, now } = sampleInputs(variant);
-      const email = renderEmail(buildDigest({ ...data, user: { ...SAMPLE_USER, email: override }, household: SAMPLE_HOUSEHOLD, now, appUrl: config.appUrl }));
+      const email = renderEmail(buildDigest({ ...data, user: { ...SAMPLE_USER, email: override }, household: SAMPLE_HOUSEHOLD, now, appUrl: config.appUrl, slot }));
       await mailer.send({ to: override, ...email, subject: `[Sample] ${email.subject}` });
       console.log(`Sent sample: ${email.subject}`);
     }
@@ -48,7 +58,9 @@ try {
     }
     db = createPool(config);
     const found = await db.query(
-      `select u.display_name, u.email, to_char(u.digest_time, 'HH24:MI') as digest_time, h.id as hid, h.name, h.time_zone, h.nudge_days
+      `select u.display_name, u.email, u.digest_morning_enabled, to_char(u.digest_time, 'HH24:MI') as morning_time,
+              u.digest_afternoon_enabled, to_char(u.digest_afternoon_time, 'HH24:MI') as afternoon_time,
+              u.digest_evening_enabled, to_char(u.digest_evening_time, 'HH24:MI') as evening_time, h.id as hid, h.name, h.time_zone, h.nudge_days
          from users u join households h on h.id = u.household_id
         where u.is_owner order by u.created_at, u.username limit 1`
     );
@@ -63,10 +75,11 @@ try {
     const email = renderEmail(
       buildDigest({
         ...data,
-        user: { displayName: owner.display_name, email: to, digestTime: owner.digest_time },
+        user: { displayName: owner.display_name, email: to, digestTime: owner.morning_time, sendTimes: sendTimesOf(owner) },
         household: { name: owner.name, timeZone: owner.time_zone, nudgeDays: owner.nudge_days },
         now,
         appUrl: config.appUrl,
+        slot,
       })
     );
     await mailer.send({ to, ...email, subject: `[Test] ${email.subject}` });

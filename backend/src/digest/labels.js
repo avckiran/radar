@@ -30,6 +30,15 @@ export function sendLabel(hhmm, zone) {
   return `${timeLabel(hhmm)} ${zoneLabel(zone)}`;
 }
 
+// "8:00 AM", "8:00 AM and 6:00 PM", "8:00 AM, 2:00 PM and 6:00 PM", followed by the zone name
+export function sendTimesLabel(times, zone) {
+  const list = [...new Set(times)].sort().map(timeLabel);
+  const joined = list.length <= 1 ? list[0] : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+  return `${joined} ${zoneLabel(zone)}`;
+}
+
+export const SLOT_NAMES = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' };
+
 export function firstName(displayName) {
   return String(displayName || '').trim().split(/\s+/)[0] || 'there';
 }

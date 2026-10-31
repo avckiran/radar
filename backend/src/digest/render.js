@@ -132,7 +132,7 @@ function header(model) {
 
 function footer(model) {
   const f = model.footer;
-  return `<tr><td style="padding:32px 32px 28px 32px"><div class="em-ink3 em-bd" style="font-size:12px;line-height:18px;color:${L['ink-3']};border-top:1px solid ${L.border};padding-top:16px">Sent to ${esc(f.email)} for ${esc(f.household)}.<br>You get this email at ${esc(f.sendLabel)}. <a class="em-ink2" href="${esc(model.links.settings)}" style="color:${L['ink-2']}">Change the time or turn it off in Settings</a>.</div></td></tr>`;
+  return `<tr><td style="padding:32px 32px 28px 32px"><div class="em-ink3 em-bd" style="font-size:12px;line-height:18px;color:${L['ink-3']};border-top:1px solid ${L.border};padding-top:16px">Sent to ${esc(f.email)} for ${esc(f.household)}.<br>${f.sendCount > 1 ? 'You get these emails' : 'You get this email'} at ${esc(f.sendLabel)}. <a class="em-ink2" href="${esc(model.links.settings)}" style="color:${L['ink-2']}">Change the time or turn it off in Settings</a>.</div></td></tr>`;
 }
 
 function bodyNormal(model) {
@@ -239,7 +239,7 @@ export function renderText(model) {
     out.push(`${model.greeting}, ${model.name}.`, '', 'Nothing on the list today. Enjoy the day.', '', ...textLoose(model), `Open RADAR: ${model.links.app}`, '');
   }
   const f = model.footer;
-  out.push('--', `Sent to ${f.email} for ${f.household}.`, `You get this email at ${f.sendLabel}. Change the time or turn it off in Settings: ${model.links.settings}`);
+  out.push('--', `Sent to ${f.email} for ${f.household}.`, `${f.sendCount > 1 ? 'You get these emails' : 'You get this email'} at ${f.sendLabel}. Change the time or turn it off in Settings: ${model.links.settings}`);
   return `${out.join('\n')}\n`;
 }
 
