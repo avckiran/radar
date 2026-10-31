@@ -31,8 +31,8 @@ export function buildSeed({ now = new Date(), timeZone = 'America/New_York' } = 
   const household = { id: seedId('household'), name: 'Our household', time_zone: timeZone, nudge_days: 5 };
 
   const users = [
-    { key: 'chandra', username: 'chandra', display_name: 'Chandra', is_owner: true },
-    { key: 'komal', username: 'komal', display_name: 'Komal', is_owner: true },
+    { key: 'chandra', username: 'avckiran', display_name: 'Chandra', is_owner: true },
+    { key: 'komal', username: 'koarora6', display_name: 'Komal', is_owner: true },
   ].map((u) => ({ ...u, id: seedId(`user:${u.key}`), household_id: household.id }));
   const userId = (key) => users.find((u) => u.key === key).id;
 

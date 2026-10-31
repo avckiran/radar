@@ -27,6 +27,7 @@ export default function HouseholdSection({ data, wide, canEdit, onSave }) {
             <Row label="Household name" value={household.name} onClick={() => setEditing(true)} disabled={!canEdit} />
           )}
         </Card>
+        <p className="rd-t-secondary rd-quiet settings-group__note">Signed in as @{me.username}.</p>
       </Group>
 
       <Group

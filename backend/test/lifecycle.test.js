@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { planTransition, HttpError } from '../src/lifecycle.js';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 
 const ctx = { now: new Date('2026-10-26T15:00:00Z'), timeZone: 'America/Chicago' };
 const base = { kind: 'action', segment_id: 's1' };
@@ -67,7 +68,7 @@ function fakeDb(item) {
 }
 
 async function post(db, path, body) {
-  const app = createApp({ db, corsOrigins: [], now: () => ctx.now });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: [], now: () => ctx.now });
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const res = await fetch(`http://localhost:${server.address().port}${path}`, {
     method: 'POST',

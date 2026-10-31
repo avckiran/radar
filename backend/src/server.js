@@ -13,5 +13,11 @@ if (config.databaseUrl) {
 }
 if (!db) console.warn('DATABASE_URL is not set. Copy backend/.env.example to backend/.env and fill it in.');
 
-const app = createApp({ db, corsOrigins: config.corsOrigins });
+let app;
+try {
+  app = createApp({ db, corsOrigins: config.corsOrigins, jwtSecret: config.jwtSecret, trustProxy: config.trustProxy });
+} catch (err) {
+  console.error(`${err.message} Add it to backend/.env (see backend/.env.example).`);
+  process.exit(1);
+}
 app.listen(config.port, () => console.log(`RADAR API listening on http://localhost:${config.port}`));

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 import { buildTsQuery } from '../src/search.js';
 import { buildSearchResult, toParts } from '../src/rules/searchView.js';
 
@@ -79,7 +80,7 @@ function fakeDb(rows) {
 }
 
 async function get(db, path) {
-  const app = createApp({ db, corsOrigins: [], now: () => NOW });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: [], now: () => NOW });
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const res = await fetch(`http://localhost:${server.address().port}${path}`);
   const json = await res.json();

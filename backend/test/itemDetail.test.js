@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 import { planEdit } from '../src/itemEdit.js';
 import { HttpError } from '../src/errors.js';
 import { buildDetail } from '../src/rules/itemView.js';
@@ -104,7 +105,7 @@ function fakeDb({ item = { ...action }, segment = { id: SEG, name: 'Finances', c
 }
 
 async function call(db, method, path, body) {
-  const app = createApp({ db, corsOrigins: [], now: () => NOW });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: [], now: () => NOW });
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const res = await fetch(`http://localhost:${server.address().port}${path}`, {
     method,

@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 
 async function start(db) {
-  const app = createApp({ db, corsOrigins: ['http://localhost:5173'] });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: ['http://localhost:5173'] });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

@@ -12,6 +12,7 @@ import { plural } from '../lib/text.js';
 import { useResource } from '../hooks/useResource.js';
 import { useShellData } from '../hooks/useShellData.jsx';
 import { useOnline } from '../hooks/useOnline.js';
+import { useAuth } from '../hooks/useAuth.jsx';
 import { useMediaQuery } from '../hooks/useMediaQuery.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 
@@ -40,6 +41,7 @@ export default function Settings() {
   const online = useOnline();
   const wide = useMediaQuery('(min-width: 768px)');
   const { notifyChanged } = useShellData();
+  const { signOut } = useAuth();
   const { data, loading, error, reload } = useResource('/api/settings');
 
   // Runs a change, then refreshes this screen and the sidebar. Forms read { ok, error } to show what went wrong.
@@ -138,6 +140,9 @@ export default function Settings() {
             {parts[s.id]}
           </div>
         ))}
+        <button type="button" className="rd-btn settings__signout" onClick={signOut}>
+          Sign out
+        </button>
       </div>
     );
   }
@@ -159,6 +164,9 @@ export default function Settings() {
               <span className="rd-fill">{s.label}</span>
             </NavLink>
           ))}
+          <button type="button" className="rd-btn settings__signout" onClick={signOut}>
+            Sign out
+          </button>
         </nav>
         <div className="settings__content">{parts[current.id]}</div>
       </div>

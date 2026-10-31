@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { openContext } from './helpers.js';
 import { buildHome } from '../src/rules/home.js';
 
 const now = new Date('2026-10-26T15:00:00Z');
@@ -46,7 +47,7 @@ test('GET /api/home returns the page in one call', async () => {
       throw new Error(`unexpected query: ${sql}`);
     },
   };
-  const app = createApp({ db, corsOrigins: [], now: () => now });
+  const app = createApp({ authenticate: openContext(db), db, corsOrigins: [], now: () => now });
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const res = await fetch(`http://localhost:${server.address().port}/api/home`);
   const body = await res.json();
