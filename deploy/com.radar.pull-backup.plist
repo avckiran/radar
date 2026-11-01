@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Makes a Mac fetch the newest RADAR backup every Sunday at 10:00 (if the Mac is asleep, it runs when it wakes up).
+  Before using: replace YOUR_MAC_USER and YOUR_USERNAME_ON_THE_SERVER below, then see docs/deployment-guide.md, step 9.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.radar.pull-backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/YOUR_MAC_USER/projects/radar/deploy/pull-backup.sh</string>
+    <string>YOUR_USERNAME_ON_THE_SERVER</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/Applications/Tailscale.app/Contents/MacOS</string></dict>
+  <key>StandardOutPath</key><string>/tmp/radar-pull-backup.log</string>
+  <key>StandardErrorPath</key><string>/tmp/radar-pull-backup.log</string>
+</dict>
+</plist>

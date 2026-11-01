@@ -1,0 +1,31 @@
+# RADAR server. Installed at /etc/systemd/system/radar-api.service (see docs/deployment-guide.md).
+# Starts when the machine starts, and starts again by itself 5 seconds after any crash.
+[Unit]
+Description=RADAR API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=radar
+Group=radar
+WorkingDirectory=/opt/radar/backend
+# The settings (database address, secrets) are read from /opt/radar/backend/.env by the app itself.
+Environment=NODE_ENV=production
+# Only the proxy on this same machine (Tailscale Funnel) may talk to the app.
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=5
+
+# Keep the app boxed in: it can read its own folder and nothing else is writable.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,5 @@
 import { clearSession, readSession } from './session.js';
+import { markSaved, readCached, saveCached } from './offlineCache.js';
 
 export const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
@@ -53,7 +54,21 @@ async function request(path, { method = 'GET', body, signal, auth = true } = {})
   return json;
 }
 
-export const apiGet = (path, options) => request(path, options);
+// Reading a screen keeps a copy. If the server cannot be reached (no connection, or it is down), the last copy is shown instead.
+export async function apiGet(path, options) {
+  try {
+    const data = await request(path, options);
+    saveCached(path, data);
+    return data;
+  } catch (err) {
+    const unreachable = err instanceof ApiError && (err.network || [502, 503, 504].includes(err.status));
+    if (unreachable && options?.auth !== false) {
+      const saved = readCached(path);
+      if (saved) return markSaved(saved.data, saved.savedAt);
+    }
+    throw err;
+  }
+}
 export const apiPost = (path, body = {}, options) => request(path, { ...options, method: 'POST', body });
 export const apiPatch = (path, body = {}, options) => request(path, { ...options, method: 'PATCH', body });
 export const apiDelete = (path, body, options) => request(path, { ...options, method: 'DELETE', body });

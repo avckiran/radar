@@ -1,0 +1,18 @@
+# One backup run. Started every night by radar-backup.timer, or by hand: sudo systemctl start radar-backup
+[Unit]
+Description=RADAR database backup
+After=network-online.target
+Wants=network-online.target
+OnFailure=radar-backup-failed.service
+
+[Service]
+Type=oneshot
+User=radar
+Group=radar
+ExecStart=/bin/bash /opt/radar/deploy/backup.sh
+TimeoutStartSec=20min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/radar

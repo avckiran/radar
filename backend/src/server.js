@@ -22,7 +22,9 @@ try {
   console.error(`${err.message} Add it to backend/.env (see backend/.env.example).`);
   process.exit(1);
 }
-app.listen(config.port, () => console.log(`RADAR API listening on http://localhost:${config.port}`));
+const onListening = () => console.log(`RADAR API listening on http://${config.host || 'localhost'}:${config.port}`);
+if (config.host) app.listen(config.port, config.host, onListening);
+else app.listen(config.port, onListening);
 
 // The daily digest runs inside this server: every 15 minutes it looks for anyone whose send time has passed
 const mailer = createMailer(config);

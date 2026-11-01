@@ -12,7 +12,9 @@
     "auth:sync": "node scripts/auth-sync.js",
     "digest:preview": "node scripts/digest-preview.js",
     "digest:send-test": "node scripts/digest-send.js",
-    "digest:colors": "node scripts/build-email-colors.mjs"
+    "digest:colors": "node scripts/build-email-colors.mjs",
+    "backup:check": "node scripts/backup-check.js",
+    "notify": "node scripts/notify.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -17,7 +17,13 @@ export function AuthProvider({ children }) {
       .catch((err) => {
         if (cancelled) return;
         if (err.status === 401) setState({ status: 'out', notice: 'Your session ended. Please sign in again.' });
-        else setState({ status: 'unreachable', error: err.message });
+        else {
+          // No connection (or the server is down) but you were already signed in on this device: open with the saved screens.
+          // Anything that needs the server will check the sign-in again as soon as it can.
+          const known = readSession()?.user;
+          if (known && (err.network || [502, 503, 504].includes(err.status))) setState({ status: 'in', user: known });
+          else setState({ status: 'unreachable', error: err.message });
+        }
       });
     return () => {
       cancelled = true;
@@ -32,7 +38,7 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(async ({ username, password, keepSignedIn }) => {
     const result = await apiPost('/api/auth/login', { username, password, keepSignedIn }, { auth: false });
-    saveSession({ token: result.token, expiresAt: result.expiresAt }, keepSignedIn);
+    saveSession({ token: result.token, expiresAt: result.expiresAt, user: result.user }, keepSignedIn);
     setState({ status: 'in', user: result.user });
   }, []);
 
