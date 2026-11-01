@@ -1,0 +1,10 @@
+# Runs only when a backup failed: sends the owner an email so a broken backup is never silent.
+[Unit]
+Description=Tell the owner that the RADAR backup failed
+
+[Service]
+Type=oneshot
+User=radar
+Group=radar
+WorkingDirectory=/opt/radar/backend
+ExecStart=/usr/bin/node scripts/notify.js "RADAR backup failed" "Last night's backup did not finish. Your data is safe in the database, but there is no new backup. On the server, run: sudo journalctl -u radar-backup -n 50   to see why. The older backups are still there."

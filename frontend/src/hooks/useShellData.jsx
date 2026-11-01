@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { apiGet } from '../lib/api.js';
 import { useOnline } from './useOnline.js';
+import { savedAtOf } from '../lib/offlineCache.js';
 
 const Ctx = createContext(null);
 
 export function ShellDataProvider({ children }) {
   const online = useOnline();
-  const [state, setState] = useState({ data: null, loading: true, error: null, updatedAt: null });
+  const [state, setState] = useState({ data: null, loading: true, error: null, updatedAt: null, stale: false });
   const [attempt, setAttempt] = useState(0);
   const [changes, setChanges] = useState(0);
 
@@ -14,7 +15,7 @@ export function ShellDataProvider({ children }) {
     const controller = new AbortController();
     setState((s) => ({ ...s, loading: true, error: null }));
     apiGet('/api/segments', { signal: controller.signal })
-      .then((data) => setState({ data, loading: false, error: null, updatedAt: new Date() }))
+      .then((data) => setState({ data, loading: false, error: null, updatedAt: savedAtOf(data) ?? new Date(), stale: !!savedAtOf(data) }))
       .catch((err) => {
         if (err.name === 'AbortError') return;
 
@@ -24,7 +25,7 @@ export function ShellDataProvider({ children }) {
   }, [attempt]);
 
   useEffect(() => {
-    if (online) setAttempt((n) => (state.error ? n + 1 : n));
+    if (online) setAttempt((n) => (state.error || state.stale ? n + 1 : n));
 
   }, [online]);
 

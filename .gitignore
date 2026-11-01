@@ -1,7 +1,6 @@
 # Secrets: never commit these. Only the *.example files are safe to share.
 .env
 .env.*
-!.env.example
 
 # Dependencies and build output
 node_modules/

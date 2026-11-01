@@ -18,8 +18,10 @@ import './styles/detail.css';
 import './styles/search.css';
 import './styles/settings.css';
 import './styles/signin.css';
+import './styles/a11y.css';
 
 import App from './App.jsx';
+import { registerServiceWorker } from './lib/serviceWorker.js';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -28,3 +30,5 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+registerServiceWorker();

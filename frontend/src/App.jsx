@@ -6,6 +6,7 @@ import { ShellDataProvider } from './hooks/useShellData.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
 import { CaptureProvider } from './components/capture/CaptureProvider.jsx';
 import AppShell from './components/shell/AppShell.jsx';
+import InstallPrompt from './components/ui/InstallPrompt.jsx';
 import Home from './pages/Home.jsx';
 import Inbox from './pages/Inbox.jsx';
 import Search from './pages/Search.jsx';
@@ -36,6 +37,7 @@ export default function App() {
         <Gate>
           <ShellDataProvider>
             <CaptureProvider>
+              <InstallPrompt />
               <Routes>
                 <Route element={<AppShell />}>
                   <Route index element={<Home />} />

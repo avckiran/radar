@@ -1,5 +1,7 @@
 // The sign-in token lives in this browser only. "Keep me signed in" uses long-lived storage;
 // otherwise it lasts until the tab is closed. Storage can be blocked, so every call is guarded.
+import { clearCache } from './offlineCache.js';
+
 const KEY = 'radar.session';
 let memory = null;
 
@@ -32,6 +34,7 @@ export function saveSession(session, keep) {
 
 export function clearSession() {
   memory = null;
+  clearCache(); // saved screens go with the sign-in
   for (const store of [window.localStorage, window.sessionStorage]) {
     try {
       store.removeItem(KEY);

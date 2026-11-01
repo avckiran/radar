@@ -1,0 +1,82 @@
+/* Tap-target and focus fixes. Imported last so it wins over earlier files.
+   Rule: anything you can press is at least 44px tall and wide (--target-min). */
+
+/* Title buttons and links inside lists: the text keeps its look, the hit area
+   grows upward and downward through padding that is cancelled by margin. */
+.rd-itemrow__title,
+.seg-row__title,
+.inbox-wide__title {
+  padding-block: 11px;
+  margin-block: -11px;
+  min-height: 0;
+  position: relative;
+}
+.rd-itemrow__title { margin-top: -3px; }
+.inbox-wide__title { padding-block: 12px; margin-block: -12px; }
+
+/* "Coming soon" sidebar entries were 40px. */
+.rd-nav--soon,
+button.rd-nav--soon {
+  height: auto;
+  min-height: var(--target-min);
+}
+
+/* Move up / move down arrows were 36px wide. */
+.segment-row__arrow {
+  width: var(--target-min);
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+}
+
+/* Digest check boxes: a 44px press area with a 22px visible box. */
+.settings-check {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: var(--target-min);
+  height: var(--target-min);
+  margin: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.settings-check::before {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.settings-check:checked::before {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.settings-check:checked::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 13px;
+  width: 6px;
+  height: 11px;
+  border: solid var(--on-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.settings-check:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.settings-check:disabled { opacity: .5; cursor: default; }
+
+/* Capture sheet drag handle: 44px press area, same 20px of layout
+   (the header below is drawn on top of the spare part). */
+.capture__handle {
+  height: var(--target-min);
+  margin-bottom: -24px;
+}
+
+/* Segmented controls (Action / Note / Link and friends) were 42px. */
+.rd-segmented button { height: var(--target-min); }

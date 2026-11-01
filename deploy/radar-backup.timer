@@ -1,0 +1,12 @@
+# Runs the backup every night at 08:30 UTC (about 3:30 to 4:30 in the morning in the US Eastern time zone).
+# "Persistent" means: if the machine was off at that time, it runs the backup as soon as it is back on.
+[Unit]
+Description=Nightly RADAR backup
+
+[Timer]
+OnCalendar=*-*-* 08:30:00 UTC
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

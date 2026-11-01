@@ -16,3 +16,7 @@ A shared household web app that keeps the things you must not forget in one plac
 7. `npm test` runs the tests for both apps.
 
 Secrets live only in `backend/.env`, which Git ignores. The repo is public, so never put secrets, passwords or personal data in any committed file.
+
+## Putting it on the server
+
+`deploy/` holds the server's service files and the backup, restore and update scripts. They contain no secrets. The step-by-step setup guide is kept outside Git.

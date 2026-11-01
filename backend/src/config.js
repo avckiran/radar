@@ -4,6 +4,8 @@ dotenv.config({ quiet: true });
 
 export const config = {
   port: Number(process.env.PORT) || 3001,
+  // Which network address to listen on. Empty means all (fine on your computer). The server unit sets 127.0.0.1 so only the proxy on the same machine can reach it.
+  host: process.env.HOST || '',
   databaseUrl: process.env.DATABASE_URL || '',
 
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173')

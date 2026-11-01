@@ -4,12 +4,12 @@ import Sidebar from './Sidebar.jsx';
 import BottomBar from './BottomBar.jsx';
 import MenuSheet from './MenuSheet.jsx';
 import DetailHost from '../detail/DetailHost.jsx';
-import { ErrorBanner, OfflineStrip } from '../ui/Banners.jsx';
+import { ErrorBanner, OfflineStrip, StaleStrip } from '../ui/Banners.jsx';
 import { useShellData } from '../../hooks/useShellData.jsx';
 import { useOnline } from '../../hooks/useOnline.js';
 
 export default function AppShell() {
-  const { error, updatedAt, refresh } = useShellData();
+  const { error, updatedAt, stale, refresh } = useShellData();
   const online = useOnline();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef(null);
@@ -43,6 +43,7 @@ export default function AppShell() {
       <Sidebar />
       <div className="shell__main">
         {!online && <OfflineStrip updatedAt={updatedAt} />}
+        {online && stale && <StaleStrip updatedAt={updatedAt} onRetry={refresh} />}
         {online && error && <ErrorBanner message={`${error}`} onRetry={refresh} />}
         <main id="main" className="shell__content" tabIndex={-1}>
           <Outlet />
