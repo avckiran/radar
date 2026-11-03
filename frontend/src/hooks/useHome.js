@@ -50,7 +50,7 @@ export function useHome() {
       setPending((p) => new Set(p).add(row.id));
       if (optimistic) setState((s) => ({ ...s, data: removeAttentionRow(s.data, row.id) }));
       try {
-        await apiPost(`/api/items/${row.id}/${action}`, body);
+        const result = await apiPost(`/api/items/${row.id}/${action}`, body);
         if (success) {
           toast.show(
             success,
@@ -60,7 +60,7 @@ export function useHome() {
                     label: 'Undo',
                     onClick: async () => {
                       try {
-                        await apiPost(`/api/items/${row.id}/reopen`, {});
+                        await apiPost(`/api/items/${row.id}/reopen`, result?.followUpId ? { undoFollowUpId: result.followUpId } : {});
                       } catch (err) {
                         toast.show(err.message);
                       }
@@ -72,7 +72,7 @@ export function useHome() {
               : undefined
           );
         }
-        return { ok: true };
+        return { ok: true, result };
       } catch (err) {
         if (optimistic) setState((s) => ({ ...s, data: before }));
         toast.show(err.message);

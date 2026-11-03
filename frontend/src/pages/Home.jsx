@@ -7,6 +7,8 @@ import ItemRow from '../components/home/ItemRow.jsx';
 import SegmentCard from '../components/home/SegmentCard.jsx';
 import SnoozePicker from '../components/home/SnoozePicker.jsx';
 import WaitingForm from '../components/home/WaitingForm.jsx';
+import { DoneForm } from '../components/detail/DetailForms.jsx';
+import { doneBody } from '../lib/followUp.js';
 import AllClearCard from '../components/home/AllClearCard.jsx';
 import Popover from '../components/home/Popover.jsx';
 import { useOpenItem } from '../hooks/useOpenItem.js';
@@ -141,15 +143,21 @@ export default function Home() {
     act(row, 'snooze', { until: date }, { success: `Snoozed until ${dayHint(date, today)}`, optimistic: true });
   }
 
+  // Done asks for an optional note and an optional follow-up first, the same popup as on the segment pages
+  function markDone(row, { note, followUp }) {
+    closeAll();
+    act(row, 'done', doneBody(note, followUp), { success: followUp ? 'Marked done. Follow-up added' : 'Marked done', optimistic: true, undo: true });
+  }
+
   async function markWaiting(row, values) {
     setWaiting({ busy: true, error: null });
-    const result = await act(row, 'waiting', values, { success: 'Marked as waiting' });
+    const result = await act(row, 'waiting', values, { success: 'Marked as follow-up' });
     if (result.ok) closeAll();
     else setWaiting({ busy: false, error: result.error });
   }
 
   function onAction(key, row) {
-    if (key === 'done') act(row, 'done', {}, { success: 'Marked done', optimistic: true, undo: true });
+    if (key === 'done') setDialog({ type: 'done', row });
     else if (key === 'back') act(row, 'reopen', {}, { success: 'Back to active' });
     else if (key === 'sort') navigate('/inbox');
     else if (key === 'snooze') (wide ? setPopoverFor(row.id) : setDialog({ type: 'snooze', row }));
@@ -244,6 +252,11 @@ export default function Home() {
         <Overlay label="Snooze until" onClose={closeAll}>
           <h2 className="rd-t-item-title">Snooze “{dialog.row.title}” until</h2>
           <SnoozePicker today={today} onPick={(date) => snooze(dialog.row, date)} onCancel={closeAll} />
+        </Overlay>
+      )}
+      {dialog?.type === 'done' && (
+        <Overlay label="Mark done" onClose={closeAll}>
+          <DoneForm today={today} busy={false} onCancel={closeAll} onSubmit={(values) => markDone(dialog.row, values)} />
         </Overlay>
       )}
       {dialog?.type === 'waiting' && (
