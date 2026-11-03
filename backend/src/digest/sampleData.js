@@ -7,6 +7,7 @@ const SEG = {
   finances: { segment_id: 's-finances', segment_name: 'Finances', segment_color: 'emerald' },
   health: { segment_id: 's-health', segment_name: 'Health', segment_color: 'rose' },
   career: { segment_id: 's-career', segment_name: 'Career', segment_color: 'blue' },
+  home: { segment_id: 's-home', segment_name: 'Home & Garden Projects', segment_color: 'violet' },
 };
 
 function item(id, title, seg, extra = {}) {
@@ -29,7 +30,9 @@ export function sampleInputs(variant) {
           item('a1', 'Renew car registration', 'general', { due_date: '2026-10-18' }),
           item('a2', 'Submit HSA receipts', 'finances', { due_date: '2026-10-21', creator: 'Dev' }),
           item('a3', 'Call dentist about crown', 'health', { due_date: '2026-10-23' }),
-          item('a4', 'Insurance claim reimbursement', 'health', { state: 'waiting', waiting_since: new Date(now.getTime() - 6 * DAY), follow_up_date: '2026-10-22', creator: 'Dev' }),
+          item('a4', 'Insurance claim reimbursement', 'health', { state: 'waiting', waiting_since: new Date(now.getTime() - 6 * DAY), waiting_on: 'the insurer', follow_up_date: '2026-10-19', creator: 'Dev' }),
+          item('f1', 'Contractor quote for the deck', 'home', { state: 'waiting', waiting_since: new Date(now.getTime() - 2 * DAY), waiting_on: 'Mike', follow_up_date: '2026-10-24' }),
+          item('f2', 'Reply from school about forms', 'general', { state: 'waiting', waiting_since: new Date(now.getTime() - 1 * DAY) }),
           item('n0', 'Schedule furnace service', 'general', { due_date: '2026-10-26' }),
           item('n1', 'Call insurance back', 'health', { due_date: '2026-10-27' }),
           item('n2', 'Review budget', 'finances', { due_date: '2026-10-29' }),

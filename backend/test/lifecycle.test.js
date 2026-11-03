@@ -108,6 +108,15 @@ test('lifecycle endpoints give plain errors', async () => {
 test('a completion note is kept on the history entry, and waiting records who or what', () => {
   assert.equal(plan('done', 'active', { note: '  Paid online  ' }).event.note, 'Paid online');
   fails(() => plan('done', 'active', { note: 'x'.repeat(1001) }), 400);
-  assert.equal(plan('waiting', 'active', { waitingOn: 'Dr. Rao' }).event.note, 'Marked Waiting on Dr. Rao');
-  assert.equal(plan('waiting', 'active', {}).event.note, 'Marked Waiting');
+  assert.equal(plan('waiting', 'active', { waitingOn: 'Dr. Rao' }).event.note, 'Marked Follow-up with Dr. Rao');
+  assert.equal(plan('waiting', 'active', {}).event.note, 'Marked Follow-up');
+});
+
+test('done can ask for a follow-up; its details are checked', () => {
+  assert.equal(plan('done', 'active', {}).followUp, null);
+  assert.deepEqual(plan('done', 'active', { followUp: true }).followUp, { waitingOn: null, checkBack: null });
+  assert.deepEqual(plan('done', 'active', { followUp: { waitingOn: '  Bank ', checkBack: '2026-10-30' } }).followUp, { waitingOn: 'Bank', checkBack: '2026-10-30' });
+  fails(() => plan('done', 'active', { followUp: { checkBack: '2026-10-20' } }), 400);
+  fails(() => plan('done', 'active', { followUp: { checkBack: 'soon' } }), 400);
+  fails(() => plan('done', 'active', { followUp: { waitingOn: 'x'.repeat(201) } }), 400);
 });

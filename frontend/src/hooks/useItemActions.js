@@ -22,7 +22,7 @@ export function useItemActions() {
                     label: 'Undo',
                     onClick: async () => {
                       try {
-                        await apiPost(`/api/items/${id}/reopen`, {});
+                        await apiPost(`/api/items/${id}/reopen`, result?.followUpId ? { undoFollowUpId: result.followUpId } : {});
                       } catch (err) {
                         toast.show(err.message);
                       }

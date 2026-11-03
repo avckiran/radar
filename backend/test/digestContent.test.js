@@ -24,11 +24,16 @@ test('the three variants are picked by what is on the list', () => {
   assert.equal(model('empty').variant, 'empty');
 });
 
-test('normal day: overdue first, due this week, waiting, inbox count, up to 5 next-week items', () => {
+test('normal day: overdue first, due this week, follow-ups, inbox count, up to 5 next-week items', () => {
   const m = model('normal');
   assert.deepEqual(m.overdue.map((r) => r.title), ['Renew car registration']);
   assert.ok(m.thisWeek.length >= 2);
-  assert.equal(m.waiting.length, 1);
+  // every open follow-up is listed, not only the ones due a nudge; the one past its check-back date leads
+  assert.deepEqual(m.followUps.map((r) => r.title), ['Insurance claim reimbursement', 'Contractor quote for the deck', 'Reply from school about forms']);
+  assert.equal(m.followUps[0].sub, 'with the insurer · check back now');
+  assert.equal(m.followUps[0].tone, 'late');
+  assert.equal(m.followUps[1].label, '2 days open');
+  assert.equal(m.followUps[2].sub, null);
   assert.equal(m.inboxCount, 3);
   assert.ok(m.nextWeek.length > 0 && m.nextWeek.length <= 5);
   assert.match(m.subject, /things need you this week/);
@@ -44,14 +49,50 @@ test('subject is singular for exactly one thing', () => {
   assert.equal(m.subject, '1 thing needs you this week');
 });
 
-test('all clear: warm, no next-week preview, one line each for waiting and inbox', () => {
+test('all clear: warm, no next-week preview, follow-ups still listed, one line for the inbox', () => {
   const m = model('allclear');
   assert.equal(m.nextWeek, undefined);
   assert.equal(m.looseEnds.inboxCount, 2);
-  assert.equal(m.looseEnds.waiting.length, 1);
+  assert.equal(m.looseEnds.followUps.length, 1);
   assert.ok(m.finished.titles.length > 0);
   const text = renderText(m);
   assert.doesNotMatch(text, /Next up/i);
+});
+
+test('rows carry the segment name and color, a short label and no creator name', () => {
+  const m = model('normal');
+  const r = m.overdue[0];
+  assert.equal(r.segment.name, 'General / Administrative');
+  assert.equal(r.label, '2 days late');
+  assert.equal(r.tone, 'late');
+  const email = renderEmail(m);
+  assert.match(email.html, /border-left:4px solid/);
+  assert.match(email.html, /General \/ Administrative/);
+  assert.doesNotMatch(email.html, /by Dev|by Maya/);
+  assert.doesNotMatch(email.text, /by Dev|by Maya/);
+  // section order: Overdue, Due this week, Follow-up needed, then the button
+  const order = ['Overdue &middot;', 'Due this week &middot;', 'Follow-up needed &middot;', 'Open RADAR'].map((x) => email.html.indexOf(x));
+  assert.ok(order.every((n) => n > 0) && [...order].sort((a, b) => a - b).join() === order.join());
+  assert.match(email.text, /FOLLOW-UP NEEDED \(3\)/);
+  assert.doesNotMatch(email.html + email.text, /Waiting|WAITING/);
+});
+
+test('all clear and empty emails still list open follow-ups', () => {
+  const clear = renderEmail(model('allclear'));
+  assert.match(clear.html, /Follow-up needed &middot; 1/);
+  assert.match(clear.text, /FOLLOW-UP NEEDED \(1\)/);
+  const none = renderEmail(model('empty'));
+  assert.doesNotMatch(none.html, /Follow-up needed/);
+});
+
+test('a section with more than 15 rows says how many are left', () => {
+  const m = model('normal', (d) => {
+    for (let i = 0; i < 18; i += 1) d.openItems.push({ ...d.openItems[0], id: `x${i}`, title: `Late thing ${i}` });
+    return d;
+  });
+  assert.equal(m.overdue.length, 15);
+  assert.equal(m.overdueMore, 4);
+  assert.match(renderEmail(m).html, /\+ 4 more in RADAR/);
 });
 
 test('empty day says the fixed sentence', () => {
@@ -111,8 +152,8 @@ test('the email colors copy matches the design tokens', () => {
 });
 
 test('afternoon and evening emails name themselves; the morning one does not', () => {
-  assert.match(model('normal').subject, /^4 things need you/);
-  assert.match(model('normal', null, { slot: 'afternoon' }).subject, /^Afternoon: 4 things need you this week$/);
+  assert.match(model('normal').subject, /^6 things need you/);
+  assert.match(model('normal', null, { slot: 'afternoon' }).subject, /^Afternoon: 6 things need you this week$/);
   assert.match(model('normal', null, { slot: 'evening' }).subject, /^Evening: /);
   assert.match(model('normal').intro, /^Here’s what needs you today/);
   assert.match(model('normal', null, { slot: 'afternoon' }).intro, /^Here’s what still needs you today/);

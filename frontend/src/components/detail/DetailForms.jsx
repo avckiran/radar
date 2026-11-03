@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { addDays, followUpOptions } from '../../lib/dates.js';
+import FollowUpFields from '../home/FollowUpFields.jsx';
+import { EMPTY_FOLLOW_UP, followUpValues } from '../../lib/followUp.js';
 
-export function DoneForm({ busy, onSubmit, onCancel }) {
+// Mark done: an optional note, and optionally a new follow-up item ("Follow up: <title>") so the finished task
+// leaves the to-do list but the thing you are waiting for does not get lost.
+export function DoneForm({ today, busy, onSubmit, onCancel }) {
   const [note, setNote] = useState('');
+  const [follow, setFollow] = useState(false);
+  const [fields, setFields] = useState(EMPTY_FOLLOW_UP);
+  const { waitingOn, checkBack, invalid } = followUpValues(fields, today);
   return (
     <form
       className="waiting-form"
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(note.trim());
+        if (follow && invalid) return;
+        onSubmit({ note: note.trim(), followUp: follow ? { waitingOn, checkBack } : null });
       }}
     >
       <h2 className="rd-t-item-title waiting-form__title">Mark done</h2>
@@ -18,12 +26,21 @@ export function DoneForm({ busy, onSubmit, onCancel }) {
         </label>
         <textarea id="done-note" className="rd-textarea" rows={3} maxLength={1000} placeholder="For example, paid online, confirmation number 4471" value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
+      <button type="button" className={`rd-btn done-follow ${follow ? 'rd-btn--selected' : ''}`} aria-pressed={follow} onClick={() => setFollow((f) => !f)}>
+        {follow ? 'Follow-up will be created' : 'Needs a follow-up?'}
+      </button>
+      {follow && (
+        <>
+          <p className="rd-t-secondary rd-muted done-follow__hint">A new follow-up with no due date is added to this segment. This task is still marked done.</p>
+          <FollowUpFields today={today} value={fields} onChange={setFields} idPrefix="done" />
+        </>
+      )}
       <div className="picker__buttons">
         <button type="button" className="rd-btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="rd-btn rd-btn--primary" disabled={busy}>
-          Mark done
+        <button type="submit" className="rd-btn rd-btn--primary" disabled={busy || (follow && invalid)}>
+          {follow ? 'Done and follow up' : 'Mark done'}
         </button>
       </div>
     </form>
@@ -35,7 +52,7 @@ export function ResetForm({ today, busy, error, onSubmit, onCancel }) {
   const options = followUpOptions(today);
   return (
     <div className="waiting-form">
-      <h2 className="rd-t-item-title waiting-form__title">New follow-up date</h2>
+      <h2 className="rd-t-item-title waiting-form__title">New check-back date</h2>
       <div className="waiting-form__choices">
         {options.map((o) => (
           <button key={o.key} type="button" className="rd-btn" disabled={busy} onClick={() => onSubmit(o.date)}>

@@ -9,6 +9,7 @@
     "test": "node --test",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
+    "db:clear-items": "node scripts/clear-items.js",
     "auth:sync": "node scripts/auth-sync.js",
     "digest:preview": "node scripts/digest-preview.js",
     "digest:send-test": "node scripts/digest-send.js",

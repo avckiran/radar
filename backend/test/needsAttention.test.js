@@ -60,7 +60,7 @@ test('daylight-saving change does not shift days (Nov 1 2026)', () => {
     opts('2026-11-05T18:00:00Z')
   );
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].tag.label, 'Waiting 5 days');
+  assert.equal(rows[0].tag.label, 'Follow-up 5 days');
 });
 
 test('daylight-saving change in March does not shift days (Mar 14 2027)', () => {
@@ -103,7 +103,7 @@ test('waiting items nudge at the threshold or after the follow-up date', () => {
   );
   assert.deepEqual(ids(rows), ['Five days', 'Follow-up']);
   assert.deepEqual(rows[0].actions, ['done', 'back']);
-  assert.match(rows[1].tag.label, /follow up today/);
+  assert.match(rows[1].tag.label, /check back today/);
 });
 
 test('a snooze that has come back shows up, one still sleeping does not', () => {
@@ -163,7 +163,7 @@ test('a waiting item due this week keeps its waiting tag and carries the due dat
     opts('2026-10-26T15:00:00Z')
   );
   assert.equal(rows[0].reason, 'due');
-  assert.deepEqual(rows[0].tag, { kind: 'waiting', label: 'Waiting 1 day · follow up Thu' });
+  assert.deepEqual(rows[0].tag, { kind: 'waiting', label: 'Follow-up 1 day · check back Thu' });
   assert.deepEqual(rows[0].due, { kind: 'soon', label: 'Due tomorrow' });
   assert.deepEqual(rows[0].actions, ['done', 'back']);
 });

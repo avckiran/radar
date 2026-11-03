@@ -80,3 +80,19 @@ button.rd-nav--soon {
 
 /* Segmented controls (Action / Note / Link and friends) were 42px. */
 .rd-segmented button { height: var(--target-min); }
+
+/* Phones zoom the whole page in when you tap a text box whose type is smaller than 16px, and the page then
+   scrolls sideways. Text boxes are 16px on touch screens so that never happens (pinch-zoom still works). */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select,
+  .rd-input,
+  .rd-textarea {
+    font-size: 16px;
+  }
+}
+
+/* "Needs a follow-up?" switch in the Done form */
+.done-follow { align-self: flex-start; }
+.done-follow__hint { margin: 0; }

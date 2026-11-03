@@ -30,10 +30,11 @@ export function describeEvent(e, { item, segmentName }) {
   const data = e.data ?? {};
   switch (e.type) {
     case 'created':
+      if (data.followUpOf) return { text: `Follow-up created from “${data.followUpOfTitle ?? 'an item'}”` };
       if (e.to_state === 'inbox') return { text: 'Captured to Inbox' };
       return { text: data.segmentName ? `Added to ${data.segmentName}` : 'Added' };
     case 'completed':
-      return { text: 'Marked done', detail: e.note || null };
+      return { text: data.followUpId ? 'Marked done, follow-up created' : 'Marked done', detail: e.note || null };
     case 'follow_up':
       return { text: e.note || 'Follow-up logged' };
     case 'edited':
@@ -43,7 +44,7 @@ export function describeEvent(e, { item, segmentName }) {
     case 'restored':
       return { text: 'Restored' };
     case 'state_change': {
-      if (e.to_state === 'waiting') return { text: e.note || 'Marked Waiting' };
+      if (e.to_state === 'waiting') return { text: data.waitingOn ? `Marked Follow-up with ${data.waitingOn}` : e.note?.replace(/Waiting on /, 'Follow-up with ').replace(/Waiting/, 'Follow-up') || 'Marked Follow-up' };
       if (e.to_state === 'snoozed') return { text: data.until ? `Snoozed until ${dayWithDate(data.until)}` : 'Snoozed' };
       if (e.from_state === 'inbox') return { text: sortedText(e, item, segmentName) };
       if (e.from_state === 'done') return { text: e.to_state === 'inbox' ? 'Reopened to Inbox' : 'Reopened' };

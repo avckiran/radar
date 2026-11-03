@@ -20,11 +20,11 @@ export default function WaitingBlock({ waiting, followUps, disabled, onLog, onRe
   }
 
   return (
-    <section className="rd-card detail-wait" aria-label="Waiting">
-      <h3 className="rd-overline">Waiting</h3>
+    <section className="rd-card detail-wait" aria-label="Follow-up">
+      <h3 className="rd-overline">Follow-up</h3>
       <dl className="detail-wait__kv">
         <div>
-          <dt className="rd-t-secondary rd-muted">Waiting on</dt>
+          <dt className="rd-t-secondary rd-muted">Following up with</dt>
           <dd>{waiting.on ?? 'Not set'}</dd>
         </div>
         <div>
@@ -32,7 +32,7 @@ export default function WaitingBlock({ waiting, followUps, disabled, onLog, onRe
           <dd>{waiting.since}</dd>
         </div>
         <div>
-          <dt className="rd-t-secondary rd-muted">Follow up</dt>
+          <dt className="rd-t-secondary rd-muted">Check back</dt>
           <dd>{waiting.followUp ?? 'Not set'}</dd>
         </div>
       </dl>
@@ -65,7 +65,7 @@ export default function WaitingBlock({ waiting, followUps, disabled, onLog, onRe
           entry.id === latest ? (
             <span className="detail-wait__next">
               <button type="button" className="rd-btn rd-btn--sm" disabled={disabled} onClick={onReset}>
-                Reset follow-up date
+                Reset check-back date
               </button>
               <button type="button" className="rd-btn rd-btn--sm" disabled={disabled} onClick={onDone}>
                 Mark done

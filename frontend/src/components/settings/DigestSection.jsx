@@ -98,7 +98,7 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
 
   const stepper = (
     <Stepper
-      label="Nudge Waiting items after"
+      label="Nudge follow-ups after"
       value={household.nudgeDays}
       min={1}
       max={60}
@@ -110,7 +110,7 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
 
   const note = noEmail
     ? 'There is no email address on your account yet, so no emails can be sent. It is set by the owner in the server settings.'
-    : 'Choose which emails you get and when. The afternoon and evening emails are skipped on days nothing needs you. Waiting items that pass the nudge limit also show up as Needs attention on Home.';
+    : 'Choose which emails you get and when. The afternoon and evening emails are skipped on days nothing needs you. Follow-ups that pass the nudge limit also show up as Needs attention on Home.';
 
   return (
     <Group title="Daily emails and nudges" note={note}>
@@ -144,7 +144,7 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
               {zoneSelect}
             </div>
             <div className="settings-field">
-              <span className="rd-t-secondary rd-muted">Nudge Waiting items after</span>
+              <span className="rd-t-secondary rd-muted">Nudge follow-ups after</span>
               {stepper}
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function DigestSection({ data, wide, canEdit, onSave }) {
               {zoneSelect}
             </div>
             <div className="settings-row">
-              <span className="settings-row__label rd-fill">Nudge Waiting items after</span>
+              <span className="settings-row__label rd-fill">Nudge follow-ups after</span>
               {stepper}
             </div>
           </>

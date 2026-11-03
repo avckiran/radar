@@ -12,6 +12,18 @@ function moved() {
   return new HttpError(409, 'That item has already changed. The list has been refreshed.');
 }
 
+// "Done, and keep following up": the optional extra that creates a new follow-up item (see applyTransition)
+function planFollowUp(raw, today) {
+  if (raw === undefined || raw === null || raw === false) return null;
+  const input = raw && typeof raw === 'object' ? raw : {};
+  const waitingOn = typeof input.waitingOn === 'string' ? input.waitingOn.trim() : '';
+  if (waitingOn.length > 200) throw new HttpError(400, 'Keep “following up with” under 200 characters.');
+  const checkBack = input.checkBack ?? null;
+  if (checkBack !== null && !isValidYmd(checkBack)) throw new HttpError(400, 'That check-back date isn’t valid.');
+  if (checkBack !== null && checkBack < today) throw new HttpError(400, 'Pick a check-back date from today on.');
+  return { waitingOn: waitingOn || null, checkBack };
+}
+
 export function planTransition(action, item, body, { now, timeZone }) {
   const today = todayInZone(now, timeZone);
   const input = body && typeof body === 'object' ? body : {};
@@ -21,9 +33,11 @@ export function planTransition(action, item, body, { now, timeZone }) {
     if (item.kind !== 'action' || from === 'done') throw moved();
     const note = typeof input.note === 'string' ? input.note.trim() : '';
     if (note.length > 1000) throw new HttpError(400, 'Keep the note under 1000 characters.');
+    const followUp = planFollowUp(input.followUp, today);
     return {
       patch: { ...CLEARED, state: 'done', completed_at: now },
       event: { type: 'completed', from, to: 'done', note: note || null, data: {} },
+      followUp,
     };
   }
 
@@ -40,7 +54,7 @@ export function planTransition(action, item, body, { now, timeZone }) {
   if (action === 'waiting') {
     if (item.kind !== 'action' || !['active', 'snoozed'].includes(from)) throw moved();
     const waitingOn = typeof input.waitingOn === 'string' ? input.waitingOn.trim() : '';
-    if (waitingOn.length > 200) throw new HttpError(400, 'Keep “waiting on” under 200 characters.');
+    if (waitingOn.length > 200) throw new HttpError(400, 'Keep “following up with” under 200 characters.');
     const followUp = input.followUp ?? null;
     if (followUp !== null && !isValidYmd(followUp)) throw new HttpError(400, 'That follow-up date isn’t valid.');
     if (followUp !== null && followUp < today) throw new HttpError(400, 'Pick a follow-up date from today on.');
@@ -50,7 +64,7 @@ export function planTransition(action, item, body, { now, timeZone }) {
         type: 'state_change',
         from,
         to: 'waiting',
-        note: waitingOn ? `Marked Waiting on ${waitingOn}` : 'Marked Waiting',
+        note: waitingOn ? `Marked Follow-up with ${waitingOn}` : 'Marked Follow-up',
         data: { waitingOn: waitingOn || null, followUp },
       },
     };
@@ -72,7 +86,7 @@ export async function applyTransition(db, { householdId, actorId, itemId, action
   if (!isUuid(itemId)) throw new HttpError(404, 'Item not found.');
   return withTransaction(db, async (tx) => {
     const found = await tx.query(
-      `select id, kind, state, segment_id from items
+      `select id, kind, state, segment_id, title from items
         where id = $1 and household_id = $2 and deleted_at is null
         for update`,
       [itemId, householdId]
@@ -80,7 +94,9 @@ export async function applyTransition(db, { householdId, actorId, itemId, action
     const item = found.rows[0];
     if (!item) throw new HttpError(404, 'Item not found.');
 
-    const { patch, event } = planTransition(action, item, body, { now, timeZone });
+    const { patch, event, followUp } = planTransition(action, item, body, { now, timeZone });
+    const followUpId = followUp ? await createFollowUp(tx, { householdId, actorId, item, followUp, now }) : null;
+    if (followUpId) event.data = { ...event.data, followUpId };
     await tx.query(
       `update items
           set state = $2, snoozed_until = $3, waiting_on = $4, follow_up_date = $5,
@@ -101,6 +117,43 @@ export async function applyTransition(db, { householdId, actorId, itemId, action
        values ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [itemId, householdId, event.type, event.from, event.to, event.note ?? null, JSON.stringify(event.data), actorId]
     );
-    return { id: itemId, state: patch.state };
+    if (action === 'reopen') await undoFollowUp(tx, { householdId, actorId, itemId, followUpId: body?.undoFollowUpId });
+    return followUpId ? { id: itemId, state: patch.state, followUpId } : { id: itemId, state: patch.state };
   });
+}
+
+// The new item for "Done, and follow up". It lives in the same segment, with no due date. An item that has no
+// segment (not sorted yet) gets a follow-up in the Inbox instead, because a follow-up needs a segment.
+async function createFollowUp(tx, { householdId, actorId, item, followUp, now }) {
+  const title = `Follow up: ${item.title}`.slice(0, 300);
+  const state = item.segment_id ? 'waiting' : 'inbox';
+  const inserted = await tx.query(
+    `insert into items (household_id, segment_id, kind, state, title, waiting_on, follow_up_date, waiting_since, created_by)
+     values ($1, $2, 'action', $3, $4, $5, $6, $7, $8) returning id`,
+    [householdId, item.segment_id, state, title, state === 'waiting' ? followUp.waitingOn : null, state === 'waiting' ? followUp.checkBack : null, state === 'waiting' ? now : null, actorId]
+  );
+  const id = inserted.rows[0].id;
+  const segment = item.segment_id ? await tx.query('select name from segments where id = $1', [item.segment_id]) : null;
+  await tx.query(
+    `insert into item_events (item_id, household_id, type, to_state, actor_id, data) values ($1, $2, 'created', $3, $4, $5)`,
+    [id, householdId, state, actorId, JSON.stringify({ segmentName: segment?.rows[0]?.name ?? null, followUpOf: item.id, followUpOfTitle: item.title, waitingOn: followUp.waitingOn, checkBack: followUp.checkBack })]
+  );
+  return id;
+}
+
+// Undo of a "Done, and follow up": the follow-up that was created goes away again (it is only hidden, like any delete).
+async function undoFollowUp(tx, { householdId, actorId, itemId, followUpId }) {
+  if (!isUuid(followUpId)) return;
+  const made = await tx.query(
+    `select i.id from items i
+       join item_events e on e.item_id = i.id and e.type = 'created' and e.data->>'followUpOf' = $3
+      where i.id = $1 and i.household_id = $2 and i.deleted_at is null`,
+    [followUpId, householdId, itemId]
+  );
+  if (!made.rows[0]) return;
+  await tx.query('update items set deleted_at = now(), updated_at = now() where id = $1', [followUpId]);
+  await tx.query(
+    `insert into item_events (item_id, household_id, type, actor_id, data) values ($1, $2, 'deleted', $3, '{}')`,
+    [followUpId, householdId, actorId]
+  );
 }
