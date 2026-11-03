@@ -105,7 +105,7 @@ export default function SegmentPage() {
   const [bodyRef, width] = useElementWidth();
   useDocumentTitle(data?.segment.name ?? 'Segment');
 
-  // Done asks for an optional note and an optional follow-up first (Home keeps its one-tap Done)
+  // Done asks for an optional note and an optional follow-up first (Home does the same)
   const [doneRow, setDoneRow] = useState(null);
 
   const markDone = useCallback(
