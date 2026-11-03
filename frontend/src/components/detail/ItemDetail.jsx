@@ -8,6 +8,7 @@ import WaitingForm from '../home/WaitingForm.jsx';
 import Field from './Field.jsx';
 import Timeline from './Timeline.jsx';
 import WaitingBlock from './WaitingBlock.jsx';
+import { doneBody } from '../../lib/followUp.js';
 import { DeleteConfirm, DoneForm, ResetForm } from './DetailForms.jsx';
 import { useResource } from '../../hooks/useResource.js';
 import { useShellData } from '../../hooks/useShellData.jsx';
@@ -209,7 +210,7 @@ export default function ItemDetail({ itemId, mode, onClose }) {
     waiting: (
       <button key="waiting" type="button" className="rd-btn" disabled={disabled || busyAction} onClick={() => setDialog('waiting')}>
         <Icon name="hourglass" size={18} />
-        Waiting
+        Follow-up
       </button>
     ),
     back: (
@@ -347,9 +348,10 @@ export default function ItemDetail({ itemId, mode, onClose }) {
       {dialog === 'done' && (
         <Overlay label="Mark done" onClose={closeDialog}>
           <DoneForm
+            today={today}
             busy={busyAction}
             onCancel={closeDialog}
-            onSubmit={(note) => runAction('done', note ? { note } : {}, { success: 'Marked done', undo: true })}
+            onSubmit={({ note, followUp }) => runAction('done', doneBody(note, followUp), { success: followUp ? 'Marked done. Follow-up added' : 'Marked done', undo: true })}
           />
         </Overlay>
       )}
@@ -360,13 +362,13 @@ export default function ItemDetail({ itemId, mode, onClose }) {
         </Overlay>
       )}
       {dialog === 'waiting' && (
-        <Overlay label="Mark as waiting" onClose={closeDialog}>
+        <Overlay label="Mark as follow-up" onClose={closeDialog}>
           <WaitingForm
             today={today}
             busy={busyAction}
             error={formError}
             onCancel={closeDialog}
-            onSubmit={(values) => runAction('waiting', values, { success: 'Marked as waiting' })}
+            onSubmit={(values) => runAction('waiting', values, { success: 'Marked as follow-up' })}
           />
         </Overlay>
       )}

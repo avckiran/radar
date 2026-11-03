@@ -9,7 +9,7 @@ export default function SegmentCard({ segment }) {
       <span className="rd-stack rd-fill">
         <span className="rd-ell segcard__name">{segment.name}</span>
         <span className="rd-ell rd-muted segcard__stats">
-          {segment.activeCount} active · {segment.waitingCount} waiting · {next}
+          {segment.activeCount} active · {segment.waitingCount} follow-up · {next}
         </span>
       </span>
       <Icon name="chev" size={16} />

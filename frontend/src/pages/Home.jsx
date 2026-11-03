@@ -247,7 +247,7 @@ export default function Home() {
         </Overlay>
       )}
       {dialog?.type === 'waiting' && (
-        <Overlay label="Mark as waiting" onClose={closeAll}>
+        <Overlay label="Mark as follow-up" onClose={closeAll}>
           <WaitingForm
             today={today}
             busy={waiting.busy}

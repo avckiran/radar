@@ -25,7 +25,7 @@ test('actions are grouped by state, soonest due first, undated last', () => {
     item({ title: 'Asleep', state: 'snoozed', snoozed_until: '2026-10-24' }),
   ]);
   assert.deepEqual(v.active.map((r) => [r.title, r.tag.label]), [['Tomorrow', 'Due tomorrow'], ['Fri', 'Due Fri'], ['Undated', 'No date']]);
-  assert.deepEqual(v.waiting.map((r) => r.tag.label), ['Waiting 6 days']);
+  assert.deepEqual(v.waiting.map((r) => r.tag.label), ['Follow-up 6 days']);
   assert.deepEqual(v.snoozed.map((r) => r.tag.label), ['Snoozed until Sat']);
   assert.deepEqual(v.stats, { active: 3, waiting: 1, nextDue: 'tomorrow' });
 });

@@ -64,14 +64,14 @@ test('a waiting item shows its block and a follow-up log, newest first, starting
   const item = { ...action, state: 'waiting', waiting_on: 'Insurer', waiting_since: new Date('2026-10-14T15:00:00Z'), follow_up_date: '2026-10-22', created_at: new Date('2026-10-08T15:00:00Z'), creator: 'Dev', segment_name: 'Health', segment_color: 'rose' };
   const events = [
     ev('created', { to_state: 'active', created_at: new Date('2026-10-08T15:00:00Z') }),
-    ev('state_change', { from_state: 'active', to_state: 'waiting', note: 'Marked Waiting on Insurer', created_at: new Date('2026-10-14T15:00:00Z') }),
+    ev('state_change', { from_state: 'active', to_state: 'waiting', note: 'Marked Follow-up with Insurer', created_at: new Date('2026-10-14T15:00:00Z') }),
     ev('follow_up', { note: 'Emailed. No reply.', created_at: new Date('2026-10-16T19:40:00Z'), actor: 'Dev' }),
     ev('follow_up', { note: 'Called claims line.', created_at: new Date('2026-10-18T15:12:00Z') }),
   ];
   const d = buildDetail({ item, events, now: NOW, timeZone: TZ });
   assert.deepEqual(d.actions, ['done', 'back']);
   assert.deepEqual(d.waiting, { on: 'Insurer', since: 'Oct 14 · 6 days', followUp: 'Thu Oct 22', followUpDate: '2026-10-22' });
-  assert.deepEqual(d.followUps.map((f) => f.text), ['Called claims line.', 'Emailed. No reply.', 'Marked Waiting on Insurer']);
+  assert.deepEqual(d.followUps.map((f) => f.text), ['Called claims line.', 'Emailed. No reply.', 'Marked Follow-up with Insurer']);
   assert.equal(d.followUps[0].stamp, 'Oct 18 · 10:12 AM');
   assert.equal(d.history.length, 4);
   assert.equal(d.history[0].text, 'Called claims line.');

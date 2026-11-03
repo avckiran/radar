@@ -17,9 +17,9 @@ export function dueTag(dueDate, today) {
 
 function followUpText(followUp, today) {
   const diff = daysBetween(today, followUp);
-  if (diff < 0) return 'follow up due';
-  if (diff === 0) return 'follow up today';
-  return `follow up ${diff > 6 ? monthDay(followUp) : weekdayShort(followUp)}`;
+  if (diff < 0) return 'check back due';
+  if (diff === 0) return 'check back today';
+  return `check back ${diff > 6 ? monthDay(followUp) : weekdayShort(followUp)}`;
 }
 
 export function waitingAgeDays(item, today, timeZone) {
@@ -28,7 +28,7 @@ export function waitingAgeDays(item, today, timeZone) {
 
 export function waitingTag(item, today, timeZone) {
   const days = waitingAgeDays(item, today, timeZone);
-  let label = days === 0 ? 'Waiting since today' : `Waiting ${plural(days, 'day')}`;
+  let label = days === 0 ? 'Follow-up since today' : `Follow-up ${plural(days, 'day')}`;
   if (item.follow_up_date) label += ` · ${followUpText(item.follow_up_date, today)}`;
   return { kind: 'waiting', label };
 }

@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import ActionRow from '../components/segment/ActionRow.jsx';
+import Overlay from '../components/ui/Overlay.jsx';
+import { DoneForm } from '../components/detail/DetailForms.jsx';
+import { doneBody } from '../lib/followUp.js';
 import { apiGet } from '../lib/api.js';
 import { useResource } from '../hooks/useResource.js';
 import { useItemActions } from '../hooks/useItemActions.js';
@@ -102,17 +105,22 @@ export default function SegmentPage() {
   const [bodyRef, width] = useElementWidth();
   useDocumentTitle(data?.segment.name ?? 'Segment');
 
+  // Done asks for an optional note and an optional follow-up first (Home keeps its one-tap Done)
+  const [doneRow, setDoneRow] = useState(null);
+
   const markDone = useCallback(
-    (row) => {
+    async ({ note, followUp }) => {
+      const row = doneRow;
+      setDoneRow(null);
       setData((d) => ({
         ...d,
         active: d.active.filter((r) => r.id !== row.id),
         waiting: d.waiting.filter((r) => r.id !== row.id),
         snoozed: d.snoozed.filter((r) => r.id !== row.id),
       }));
-      run(row.id, 'done', {}, { success: 'Marked done', undo: true });
+      await run(row.id, 'done', doneBody(note, followUp), { success: followUp ? 'Marked done. Follow-up added' : 'Marked done', undo: true });
     },
-    [run, setData]
+    [doneRow, run, setData]
   );
 
   if (!data) {
@@ -150,7 +158,7 @@ export default function SegmentPage() {
     <ul className="home__list home__list--tight">
       {rows.map((row) => (
         <li key={row.id}>
-          <ActionRow row={row} disabled={!online || pending.has(row.id)} onDone={markDone} onOpen={openItem} />
+          <ActionRow row={row} disabled={!online || pending.has(row.id)} onDone={setDoneRow} onOpen={openItem} />
         </li>
       ))}
     </ul>
@@ -162,7 +170,7 @@ export default function SegmentPage() {
     </Section>
   );
   const waiting = data.waiting.length > 0 && (
-    <Section key="waiting" title="Waiting" count={data.waiting.length}>
+    <Section key="waiting" title="Follow-up" count={data.waiting.length}>
       {actionRows(data.waiting)}
     </Section>
   );
@@ -228,7 +236,7 @@ export default function SegmentPage() {
           </button>
         </div>
         <p className="rd-t-secondary rd-quiet page__subtitle">
-          {stats.active} active · {stats.waiting} waiting · {next}
+          {stats.active} active · {stats.waiting} follow-up · {next}
         </p>
       </header>
 
@@ -261,6 +269,12 @@ export default function SegmentPage() {
           </div>
         )}
       </div>
+
+      {doneRow && (
+        <Overlay label="Mark done" onClose={() => setDoneRow(null)}>
+          <DoneForm today={data.today} busy={false} onCancel={() => setDoneRow(null)} onSubmit={markDone} />
+        </Overlay>
+      )}
     </div>
   );
 }

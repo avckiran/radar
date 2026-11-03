@@ -5,7 +5,7 @@ import SegmentChip from './SegmentChip.jsx';
 const ACTIONS = {
   done: { icon: 'check', label: 'Done', aria: 'Mark done' },
   snooze: { icon: 'moon', label: 'Snooze', aria: 'Snooze' },
-  waiting: { icon: 'hourglass', label: 'Waiting', aria: 'Mark as waiting' },
+  waiting: { icon: 'hourglass', label: 'Follow-up', aria: 'Mark as follow-up' },
   back: { icon: 'back', label: 'Resume', aria: 'Back to active' },
   sort: { icon: 'folder', label: 'Sort', aria: 'Sort into a segment' },
 };
