@@ -24,15 +24,31 @@ const EVENT_SQL = `select e.id, e.item_id, i.title as item_title, e.type, e.from
                      left join users u on u.id = e.actor_id
                     where e.household_id = $1 order by e.created_at, e.id`;
 
+const SHOPPING_LIST_SQL = `select l.id, l.title, l.note, u.display_name as created_by, l.created_at, l.updated_at,
+                                  l.archived_at, a.display_name as archived_by, l.deleted_at
+                             from shopping_lists l
+                             left join users u on u.id = l.created_by
+                             left join users a on a.id = l.archived_by
+                            where l.household_id = $1 order by l.created_at, l.id`;
+const SHOPPING_ITEM_SQL = `select i.id, i.list_id, l.title as list_title, i.text, i.checked_at, c.display_name as checked_by,
+                                  u.display_name as created_by, i.created_at, i.updated_at, i.deleted_at
+                             from shopping_items i
+                             join shopping_lists l on l.id = i.list_id
+                             left join users u on u.id = i.created_by
+                             left join users c on c.id = i.checked_by
+                            where i.household_id = $1 order by i.created_at, i.seq`;
+
 const camel = (s) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 const mapRow = (row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [camel(k), v]));
 
 export async function loadExport(db, ctx, now) {
-  const [users, segments, items, events] = await Promise.all([
+  const [users, segments, items, events, shoppingLists, shoppingItems] = await Promise.all([
     db.query(USER_SQL, [ctx.householdId]),
     db.query(SEGMENT_SQL, [ctx.householdId]),
     db.query(ITEM_SQL, [ctx.householdId]),
     db.query(EVENT_SQL, [ctx.householdId]),
+    db.query(SHOPPING_LIST_SQL, [ctx.householdId]),
+    db.query(SHOPPING_ITEM_SQL, [ctx.householdId]),
   ]);
   return {
     exportedAt: now.toISOString(),
@@ -41,6 +57,8 @@ export async function loadExport(db, ctx, now) {
     segments: segments.rows.map(mapRow),
     items: items.rows.map(mapRow),
     events: events.rows.map(mapRow),
+    shoppingLists: shoppingLists.rows.map(mapRow),
+    shoppingItems: shoppingItems.rows.map(mapRow),
   };
 }
 
@@ -54,12 +72,16 @@ export function buildCsvFiles(data) {
     'history.csv': data.events,
     'segments.csv': data.segments,
     'users.csv': data.users,
+    'shopping-lists.csv': data.shoppingLists,
+    'shopping-items.csv': data.shoppingItems,
   };
   const first = {
     'items.csv': ['id', 'kind', 'state', 'title', 'segment', 'segmentId', 'body', 'url', 'description', 'dueDate', 'snoozedUntil', 'waitingOn', 'followUpDate', 'waitingSince', 'completedAt', 'createdBy', 'createdAt', 'updatedAt', 'deletedAt'],
     'history.csv': ['id', 'itemId', 'itemTitle', 'type', 'fromState', 'toState', 'note', 'data', 'actor', 'createdAt'],
     'segments.csv': ['id', 'name', 'color', 'sortOrder', 'protected', 'allowedKinds', 'createdAt', 'deletedAt'],
     'users.csv': ['id', 'username', 'displayName', 'email', 'isOwner', 'digestEnabled', 'digestMorningEnabled', 'digestMorningTime', 'digestAfternoonEnabled', 'digestAfternoonTime', 'digestEveningEnabled', 'digestEveningTime', 'createdAt'],
+    'shopping-lists.csv': ['id', 'title', 'note', 'createdBy', 'createdAt', 'updatedAt', 'archivedAt', 'archivedBy', 'deletedAt'],
+    'shopping-items.csv': ['id', 'listId', 'listTitle', 'text', 'checkedAt', 'checkedBy', 'createdBy', 'createdAt', 'updatedAt', 'deletedAt'],
   };
   return Object.entries(sets).map(([name, rows]) => ({
     name,

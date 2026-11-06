@@ -175,3 +175,57 @@ test('the footer lists every time the person gets an email', () => {
   assert.match(email.text, /You get these emails at 8:00 AM, 2:00 PM and 6:00 PM Eastern/);
   assert.match(email.html, /You get these emails at 8:00 AM, 2:00 PM and 6:00 PM Eastern/);
 });
+
+test('a quiet line names the open shopping lists, in the html and the text, and nothing else changes', () => {
+  const plain = model('normal', (d) => ({ ...d, shoppingLists: [] }));
+  const m = model('normal');
+  assert.equal(m.shopping.lead, 'Two shopping lists are active:');
+  assert.deepEqual(m.shopping.names, ['Whole Foods', 'Amazon']);
+  assert.equal(m.links.shopping, `${APP_URL}/shopping`);
+  // the subject, counts and the afternoon/evening skip inputs do not depend on the lists
+  assert.equal(m.subject, plain.subject);
+  assert.equal(m.needsYou, plain.needsYou);
+  assert.equal(m.preheader, plain.preheader);
+
+  const html = renderHtml(m);
+  assert.match(html, /Two shopping lists are active: <a [^>]*href="https:\/\/example\.github\.io\/radar\/shopping"[^>]*>Whole Foods<\/a> and <a [^>]*>Amazon<\/a>\./);
+  const text = renderText(m);
+  assert.match(text, /Two shopping lists are active: Whole Foods and Amazon\. https:\/\/example\.github\.io\/radar\/shopping/);
+  assert.ok(text.indexOf('Two shopping lists') < text.indexOf('Sent to'));
+  // never what is on the lists
+  assert.ok(!/milk|eggs/i.test(html));
+});
+
+test('the shopping line is absent with no open lists, and is worded for one, many and a lot', () => {
+  for (const variant of SAMPLE_VARIANTS) {
+    const none = model(variant, (d) => ({ ...d, shoppingLists: [] }));
+    assert.equal(none.shopping, null);
+    assert.ok(!/shopping list/i.test(renderHtml(none)) && !/shopping list/i.test(renderText(none)), variant);
+  }
+  assert.equal(model('empty', (d) => ({ ...d, shoppingLists: ['Costco'] })).shopping.lead, 'One shopping list is active:');
+  assert.match(renderText(model('empty', (d) => ({ ...d, shoppingLists: ['Costco'] }))), /One shopping list is active: Costco\./);
+  const many = model('allclear', (d) => ({ ...d, shoppingLists: ['A', 'B', 'C', 'D', 'E', 'F'] }));
+  assert.equal(many.shopping.lead, 'Six shopping lists are active:');
+  assert.match(renderText(many), /Six shopping lists are active: A, B, C, D and 2 more\./);
+  const lots = model('normal', (d) => ({ ...d, shoppingLists: Array.from({ length: 12 }, (_, i) => `L${i}`) }));
+  assert.equal(lots.shopping.lead, '12 shopping lists are active:');
+  // a missing field (older callers) is the same as no lists
+  const { data, now } = sampleInputs('normal');
+  const { shoppingLists, ...without } = data;
+  assert.equal(buildDigest({ ...without, user: SAMPLE_USER, household: SAMPLE_HOUSEHOLD, now, appUrl: APP_URL }).shopping, null);
+});
+
+test('list titles are escaped in the html', () => {
+  const m = model('empty', (d) => ({ ...d, shoppingLists: ['<b>Tom & Jerry</b>'] }));
+  const html = renderHtml(m);
+  assert.ok(html.includes('&lt;b&gt;Tom &amp; Jerry&lt;/b&gt;'));
+  assert.ok(!html.includes('<b>Tom'));
+});
+
+test('the shopping line shows in all three kinds of email', () => {
+  for (const variant of SAMPLE_VARIANTS) {
+    const m = model(variant, (d) => ({ ...d, shoppingLists: ['Whole Foods'] }));
+    assert.match(renderHtml(m), /One shopping list is active/, variant);
+    assert.match(renderText(m), /One shopping list is active/, variant);
+  }
+});

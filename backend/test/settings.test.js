@@ -179,14 +179,14 @@ test('export: JSON and a CSV zip, without secrets', async () => {
   const json = await call('GET', '/api/export?format=json');
   assert.equal(json.status, 200);
   assert.match(json.headers.get('content-disposition'), /radar-export-2026-10-26\.json/);
-  assert.deepEqual(Object.keys(json.body), ['exportedAt', 'household', 'users', 'segments', 'items', 'events']);
+  assert.deepEqual(Object.keys(json.body), ['exportedAt', 'household', 'users', 'segments', 'items', 'events', 'shoppingLists', 'shoppingItems']);
   assert.equal(json.body.users.length, 2);
   assert.ok(!/password|\$2[aby]\$/i.test(JSON.stringify(json.body)));
   const zip = await call('GET', '/api/export?format=csv', undefined, true);
   assert.equal(zip.headers.get('content-type'), 'application/zip');
   assert.equal(zip.buf.readUInt32LE(0), 0x04034b50);
   const text = zip.buf.toString('latin1');
-  for (const name of ['items.csv', 'history.csv', 'segments.csv', 'users.csv']) assert.ok(text.includes(name), name);
+  for (const name of ['items.csv', 'history.csv', 'segments.csv', 'users.csv', 'shopping-lists.csv', 'shopping-items.csv']) assert.ok(text.includes(name), name);
   assert.ok(!/password|\$2[aby]\$/i.test(text));
   assert.equal((await call('GET', '/api/export?format=xml')).status, 400);
 });

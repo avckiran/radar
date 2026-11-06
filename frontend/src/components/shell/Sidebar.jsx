@@ -79,6 +79,7 @@ export default function Sidebar() {
       <NavItem to="/" end icon="home" label="Home" />
       <NavItem to="/inbox" icon="inbox" label="Inbox" count={data?.inboxCount ?? 0} />
       <NavItem to="/search" icon="search" label="Search" hint="/" />
+      <NavItem to="/shopping" icon="cart" label="Shopping Lists" />
       <SoonItem icon="refresh" label="Trackers" />
       <SoonItem icon="cal" label="Calendar" />
 

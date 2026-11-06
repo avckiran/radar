@@ -26,6 +26,10 @@ export default function MenuSheet({ onClose }) {
       >
         <div className="rd-grab" aria-hidden="true" />
         <div className="menu-sheet__list">
+          <NavLink to="/shopping" className="rd-nav" onClick={onClose}>
+            <Icon name="cart" />
+            <span className="rd-fill">Shopping Lists</span>
+          </NavLink>
           <div className="rd-overline nav-overline">Segments</div>
           <SegmentLinks onNavigate={onClose} />
           <div className="rd-overline nav-overline">Coming later</div>

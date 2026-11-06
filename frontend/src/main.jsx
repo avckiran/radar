@@ -17,6 +17,7 @@ import './styles/capture.css';
 import './styles/detail.css';
 import './styles/search.css';
 import './styles/settings.css';
+import './styles/shopping.css';
 import './styles/signin.css';
 import './styles/a11y.css';
 

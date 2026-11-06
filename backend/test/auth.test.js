@@ -12,6 +12,7 @@ import { buildSeed } from '../src/seedData.js';
 const NOW = new Date('2026-10-26T15:00:00Z');
 const SECRET = 'test-secret-test-secret-test-secret-123456';
 const PW = { avckiran: 'correct horse battery', koarora6: 'second long password!', outsider: 'outsider password 1' };
+const SHOP = { list: '00000000-0000-4000-8000-0000000000c1', item: '00000000-0000-4000-8000-0000000000c2' };
 const B = { household: '00000000-0000-4000-8000-0000000000b1', user: '00000000-0000-4000-8000-0000000000b2', segment: '00000000-0000-4000-8000-0000000000b3', item: '00000000-0000-4000-8000-0000000000b4' };
 
 let pg, server, base, seed;
@@ -70,6 +71,8 @@ before(async () => {
   await insert('users', { id: B.user, household_id: B.household, username: 'outsider', display_name: 'Outsider', is_owner: true, password_hash: bcrypt.hashSync(PW.outsider, 4) });
   await insert('segments', { id: B.segment, household_id: B.household, name: 'Secret stuff', color: 'blue', sort_order: 0, protected: true });
   await insert('items', { id: B.item, household_id: B.household, segment_id: B.segment, kind: 'action', state: 'active', title: 'Outsider zebra plan', created_by: B.user, created_at: NOW, updated_at: NOW });
+  await insert('shopping_lists', { id: SHOP.list, household_id: seed.household.id, title: 'Whole Foods secret', created_by: seed.users[0].id });
+  await insert('shopping_items', { id: SHOP.item, list_id: SHOP.list, household_id: seed.household.id, text: 'Oat milk', created_by: seed.users[0].id });
   await insert('item_events', { item_id: B.item, household_id: B.household, type: 'created', to_state: 'active', note: 'zebra note', actor_id: B.user, created_at: NOW });
 
   const db = { query: (s, p) => pg.query(s, p), connect: async () => ({ query: (s, p) => pg.query(s, p), release() {} }) };
@@ -113,6 +116,17 @@ const ROUTES = [
   ['POST', '/api/items/00000000-0000-4000-8000-000000000001/snooze'],
   ['POST', '/api/items/00000000-0000-4000-8000-000000000001/waiting'],
   ['POST', '/api/items/00000000-0000-4000-8000-000000000001/reopen'],
+  ['GET', '/api/shopping'],
+  ['POST', '/api/shopping'],
+  ['GET', '/api/shopping/00000000-0000-4000-8000-000000000001'],
+  ['PATCH', '/api/shopping/00000000-0000-4000-8000-000000000001'],
+  ['DELETE', '/api/shopping/00000000-0000-4000-8000-000000000001'],
+  ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/archive'],
+  ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/reopen'],
+  ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/copy'],
+  ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/items'],
+  ['PATCH', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
+  ['DELETE', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
   ['GET', '/api/something-that-does-not-exist'],
 ];
 
@@ -206,6 +220,8 @@ test('a person from another household cannot read or change this household’s d
       (await pg.query('select count(*)::int n from item_events where household_id = $1', [seed.household.id])).rows,
       (await pg.query('select id, name, color, sort_order, deleted_at from segments where household_id = $1 order by id', [seed.household.id])).rows,
       (await pg.query('select name, time_zone, nudge_days from households where id = $1', [seed.household.id])).rows,
+      (await pg.query('select id, title, note, archived_at, deleted_at, updated_at from shopping_lists where household_id = $1 order by id', [seed.household.id])).rows,
+      (await pg.query('select id, text, checked_at, deleted_at, updated_at from shopping_items where household_id = $1 order by id', [seed.household.id])).rows,
     ]);
   const before = await snapshot();
 
@@ -227,6 +243,16 @@ test('a person from another household cannot read or change this household’s d
   assert.equal((await denied('PATCH', `/api/segments/${seg.id}`, { name: 'hacked' })).status, 404);
   assert.equal((await denied('DELETE', `/api/segments/${seg.id}`, { deleteItems: true })).status, 404);
   assert.equal((await denied('POST', '/api/segments/reorder', { ids: seed.segments.map((s) => s.id) })).status, 409);
+  // shopping lists are household-only too
+  assert.equal((await denied('GET', `/api/shopping/${SHOP.list}`)).status, 404);
+  assert.equal((await denied('PATCH', `/api/shopping/${SHOP.list}`, { title: 'hacked' })).status, 404);
+  assert.equal((await denied('DELETE', `/api/shopping/${SHOP.list}`)).status, 404);
+  assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/items`, { id: '33333333-3333-4333-8333-333333333333', text: 'sneaky' })).status, 404);
+  assert.equal((await denied('PATCH', `/api/shopping/${SHOP.list}/items/${SHOP.item}`, { checked: true })).status, 404);
+  assert.equal((await denied('DELETE', `/api/shopping/${SHOP.list}/items/${SHOP.item}`)).status, 404);
+  assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/archive`, {})).status, 404);
+  assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/copy`, { id: '44444444-4444-4444-8444-444444444444' })).status, 404);
+  assert.deepEqual((await call('GET', '/api/shopping', { token: outsider })).body, { open: [], archived: [] });
   // putting their own item into our segment, or capturing into it, is refused
   await denied('PATCH', `/api/items/${B.item}`, { segmentId: seg.id });
   await denied('POST', '/api/items', { id: '22222222-2222-4222-8222-222222222222', kind: 'action', title: 'sneaky', segmentId: seg.id });
@@ -248,7 +274,7 @@ test('a person from another household cannot read or change this household’s d
   assert.deepEqual(settings.members.map((m) => m.username), ['outsider']);
   assert.deepEqual(settings.segments.map((s) => s.name), ['Secret stuff']);
   const json = JSON.stringify((await call('GET', '/api/export?format=json', { token: outsider })).body);
-  assert.ok(json.includes('zebra') && !json.includes('Renew car registration') && !json.includes('avckiran'));
+  assert.ok(json.includes('zebra') && !json.includes('Renew car registration') && !json.includes('avckiran') && !json.includes('Whole Foods') && !json.includes('Oat milk'));
   const zip = (await call('GET', '/api/export?format=csv', { token: outsider, raw: true })).buf.toString('utf8');
   assert.ok(zip.includes('zebra') && !zip.includes('Renew car registration') && !zip.includes('avckiran'));
   // deleting "archived" items and changing settings only touch their own household

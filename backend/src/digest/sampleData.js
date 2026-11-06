@@ -45,6 +45,7 @@ export function sampleInputs(variant) {
         ],
         doneItems: [],
         inboxCount: 3,
+        shoppingLists: ['Whole Foods', 'Amazon'],
       },
     };
   }
@@ -62,6 +63,7 @@ export function sampleInputs(variant) {
         ],
         doneItems: finished,
         inboxCount: 2,
+        shoppingLists: ['Costco'],
       },
     };
   }
