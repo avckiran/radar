@@ -10,6 +10,8 @@ import InstallPrompt from './components/ui/InstallPrompt.jsx';
 import Home from './pages/Home.jsx';
 import Inbox from './pages/Inbox.jsx';
 import Search from './pages/Search.jsx';
+import Shopping from './pages/Shopping.jsx';
+import ShoppingList from './pages/ShoppingList.jsx';
 import Settings from './pages/Settings.jsx';
 import SegmentPage from './pages/SegmentPage.jsx';
 import DevStates from './pages/DevStates.jsx';
@@ -43,6 +45,8 @@ export default function App() {
                   <Route index element={<Home />} />
                   <Route path="inbox" element={<Inbox />} />
                   <Route path="search" element={<Search />} />
+                  <Route path="shopping" element={<Shopping />} />
+                  <Route path="shopping/:listId" element={<ShoppingList />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="settings/:section" element={<Settings />} />
                   <Route path="segments/:segmentId" element={<SegmentPage />} />

@@ -1,4 +1,5 @@
 import { ITEM_COLUMNS, ITEM_JOINS } from '../queries.js';
+import { activeListTitles } from '../shopping.js';
 
 // What the digest needs from one household: every open item, and what was finished in the last 8 days
 export async function loadDigestData(db, householdId, now) {
@@ -19,6 +20,7 @@ export async function loadDigestData(db, householdId, now) {
     [householdId, since]
   );
   return {
+    shoppingLists: await activeListTitles(db, householdId),
     openItems: open.rows,
     doneItems: done.rows,
     inboxCount: open.rows.filter((i) => i.state === 'inbox').length,

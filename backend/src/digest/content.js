@@ -1,7 +1,7 @@
 import { addDays, daysBetween, endOfWeek, monthDay, todayInZone, weekdayShort } from '../dates.js';
 import { needsAttention, plural, waitingAgeDays } from '../rules/needsAttention.js';
 import { nextUp } from '../rules/home.js';
-import { SLOT_NAMES, dateLabel, firstName, greetingFor, joinUrl, sendLabel, sendTimesLabel, shortSegment } from './labels.js';
+import { SLOT_NAMES, dateLabel, firstName, greetingFor, joinUrl, sendLabel, sendTimesLabel, shoppingLine, shortSegment } from './labels.js';
 
 const NEXT_WEEK_MAX = 5;
 const FINISHED_SHOWN = 4;
@@ -59,7 +59,7 @@ function followUpRows(openItems, listed, today, timeZone) {
 }
 
 // Everything the three templates need, worked out once. The rules for "what needs you" are the same module Home uses.
-export function buildDigest({ openItems, doneItems, inboxCount, user, household, now, appUrl, slot = 'morning' }) {
+export function buildDigest({ openItems, doneItems, inboxCount, shoppingLists = [], user, household, now, appUrl, slot = 'morning' }) {
   const { timeZone, nudgeDays } = household;
   const today = todayInZone(now, timeZone);
   const weekEnd = endOfWeek(today);
@@ -92,8 +92,9 @@ export function buildDigest({ openItems, doneItems, inboxCount, user, household,
     today,
     weekEnd,
     inboxCount,
+    shopping: shoppingLine(shoppingLists), // a quiet note at the bottom; it never changes the subject or the skip rule
     openThisWeek: overdue.length + thisWeek.length,
-    links: { app: link('/'), inbox: link('/inbox'), settings: link('/settings'), item: (id) => link(`/items/${id}`) },
+    links: { app: link('/'), inbox: link('/inbox'), shopping: link('/shopping'), settings: link('/settings'), item: (id) => link(`/items/${id}`) },
     footer: {
       email: user.email,
       household: household.name,

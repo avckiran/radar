@@ -1,5 +1,5 @@
 import { EMAIL_COLORS } from './emailColors.js';
-import { plural } from './labels.js';
+import { joinNames, plural } from './labels.js';
 
 const L = EMAIL_COLORS.light;
 const D = EMAIL_COLORS.dark;
@@ -104,6 +104,15 @@ function looseEndsBlock(model) {
   return followUps + inbox;
 }
 
+// A quiet line at the bottom: which shopping lists are still open. Names only, no items.
+function shoppingNote(model) {
+  const s = model.shopping;
+  if (!s) return '';
+  const link = (name) => `<a class="em-ink2" href="${esc(model.links.shopping)}" style="color:${L['ink-2']};text-decoration:underline">${esc(name)}</a>`;
+  const names = [...s.names.map(link), ...(s.more ? [`${s.more} more`] : [])];
+  return `<tr><td class="em-pad" style="padding:22px 32px 0 32px"><div class="em-ink3" style="font-size:13px;line-height:20px;color:${L['ink-3']}">${esc(s.lead)} ${joinNames(names)}.</div></td></tr>`;
+}
+
 function header(model) {
   return `<tr><td class="em-pad" style="padding:24px 32px 0 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:14px;line-height:20px;font-weight:700;letter-spacing:.14em;color:${L.ink}" class="em-ink"><span class="em-ring" style="display:inline-block;width:12px;height:12px;border:2.5px solid ${L.ink};border-radius:50%;vertical-align:-2px;margin-right:8px"></span>RADAR</td><td align="right" class="em-ink3" style="font-size:13px;line-height:18px;color:${L['ink-3']}">${esc(model.dateLabel)}</td></tr></table></td></tr>`;
 }
@@ -168,7 +177,7 @@ ${darkCss()}
 </style>
 </head>
 <body style="margin:0;padding:0">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="em-page" bgcolor="${L.bg}" style="background:${L.bg}"><tr><td align="center" style="padding:24px 12px"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(model.preheader)}</div><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="em-card" bgcolor="${L.surface}" style="width:100%;max-width:600px;background:${L.surface};border:1px solid ${L.border};border-radius:16px;font-family:${FONT};color:${L.ink}">${header(model)}${body}${footer(model)}</table></td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="em-page" bgcolor="${L.bg}" style="background:${L.bg}"><tr><td align="center" style="padding:24px 12px"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(model.preheader)}</div><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="em-card" bgcolor="${L.surface}" style="width:100%;max-width:600px;background:${L.surface};border:1px solid ${L.border};border-radius:16px;font-family:${FONT};color:${L.ink}">${header(model)}${body}${shoppingNote(model)}${footer(model)}</table></td></tr></table>
 </body>
 </html>
 `;
@@ -218,6 +227,10 @@ export function renderText(model) {
     out.push('', ...textLoose(model));
   } else {
     out.push(`${model.greeting}, ${model.name}.`, '', 'Nothing on the list today. Enjoy the day.', '', ...textLoose(model), `Open RADAR: ${model.links.app}`, '');
+  }
+  if (model.shopping) {
+    const s = model.shopping;
+    out.push(`${s.lead} ${joinNames([...s.names, ...(s.more ? [`${s.more} more`] : [])])}. ${model.links.shopping}`, '');
   }
   const f = model.footer;
   out.push('--', `Sent to ${f.email} for ${f.household}.`, `${f.sendCount > 1 ? 'You get these emails' : 'You get this email'} at ${f.sendLabel}. Change the time or turn it off in Settings: ${model.links.settings}`);

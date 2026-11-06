@@ -68,3 +68,25 @@ export function joinUrl(base, pathAndQuery = '') {
   const root = String(base || '').replace(/\/+$/, '');
   return `${root}${pathAndQuery}`;
 }
+
+// "Two shopping lists are active: Whole Foods and Amazon." Only the names, never what is on the lists.
+const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+const SHOPPING_NAMES_MAX = 4;
+
+export function shoppingLine(titles) {
+  const list = (titles ?? []).filter((t) => typeof t === 'string' && t.trim());
+  if (list.length === 0) return null;
+  const n = list.length;
+  return {
+    count: n,
+    lead: `${n <= 10 ? COUNT_WORDS[n] : n} shopping ${n === 1 ? 'list is' : 'lists are'} active:`,
+    names: list.slice(0, SHOPPING_NAMES_MAX),
+    more: Math.max(0, n - SHOPPING_NAMES_MAX),
+  };
+}
+
+// ['A'] -> 'A'; ['A', 'B'] -> 'A and B'; ['A', 'B', 'C'] -> 'A, B and C'
+export function joinNames(parts) {
+  if (parts.length <= 1) return parts[0] ?? '';
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}

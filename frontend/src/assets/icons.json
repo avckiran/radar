@@ -44,6 +44,7 @@
   "gear": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2\"/>",
   "user": "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 4-6 8-6s8 2 8 6\"/>",
   "more": "<path d=\"M5 12h.01M12 12h.01M19 12h.01\" stroke-width=\"3.5\"/>",
+  "cart": "<path d=\"M3 4h2l2.2 11h10.6L20 7H6.2\"/><circle cx=\"9\" cy=\"19.5\" r=\"1.2\"/><circle cx=\"17\" cy=\"19.5\" r=\"1.2\"/>",
   "refresh": "<path d=\"M20 11a8 8 0 10-2 6\"/><path d=\"M20 4v7h-7\"/>",
   "back": "<path d=\"M15 6l-6 6 6 6\"/>",
   "trash": "<path d=\"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14\"/>",
