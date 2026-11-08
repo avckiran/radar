@@ -1,74 +1,52 @@
 import Icon from '../Icon.jsx';
-import StateTag from './StateTag.jsx';
-import SegmentChip from './SegmentChip.jsx';
 
+// Same look as a row in the email: a thick left edge in the segment colour,
+// the title, the segment name small underneath and a short label on the right.
+// Done and Snooze are icon-only buttons (the aria-label says what they do).
 const ACTIONS = {
-  done: { icon: 'check', label: 'Done', aria: 'Mark done' },
-  snooze: { icon: 'moon', label: 'Snooze', aria: 'Snooze' },
-  waiting: { icon: 'hourglass', label: 'Follow-up', aria: 'Mark as follow-up' },
-  back: { icon: 'back', label: 'Resume', aria: 'Back to active' },
-  sort: { icon: 'folder', label: 'Sort', aria: 'Sort into a segment' },
+  done: { icon: 'check', aria: 'Mark done' },
+  snooze: { icon: 'moon', aria: 'Snooze' },
 };
 
-function Meta({ row }) {
-  const showDue = row.due && row.tag.kind !== row.due.kind && ['waiting', 'snoozed'].includes(row.tag.kind);
+export function RowShell({ segment, children, className = '' }) {
+  const colour = segment ? `rd-seg-${segment.color}` : 'hrow--nosegment';
+  return <div className={`hrow ${colour} ${className}`}>{children}</div>;
+}
+
+export function RowText({ title, segment, creator, sub, onOpen }) {
+  const meta = [segment?.name ?? 'No segment', creator].filter(Boolean).join(' · ');
   return (
-    <div className="rd-itemrow__meta">
-      <SegmentChip segment={row.segment} />
-      {showDue && <span className="rd-t-secondary rd-muted itemrow__due">{row.due.label}</span>}
-      {row.creator && (
-        <span className="rd-by">
-          <i className="rd-avatar" aria-hidden="true">
-            {row.creator[0]}
-          </i>
-          <span className="rd-ell">{row.creator}</span>
-        </span>
-      )}
-    </div>
+    <button type="button" className="hrow__open" onClick={onOpen}>
+      <span className="hrow__title rd-ell">{title}</span>
+      <span className="hrow__meta rd-ell">{meta}</span>
+      {sub && <span className="hrow__meta hrow__meta--wrap">{sub}</span>}
+    </button>
   );
 }
 
-export default function ItemRow({ row, wide, disabled, onAction, onOpen }) {
-  const level = row.due?.kind ?? row.tag.kind;
-  const urgency = level === 'overdue' ? 'rd-itemrow--overdue' : level === 'soon' ? 'rd-itemrow--soon' : '';
-  const buttons = row.actions.map((key) => {
-    const action = ACTIONS[key];
-    return (
-      <button
-        key={key}
-        type="button"
-        disabled={disabled}
-        aria-label={`${action.aria}: ${row.title}`}
-        onClick={(e) => onAction(key, row, e.currentTarget)}
-      >
-        <Icon name={action.icon} size={16} />
-        {action.label}
-      </button>
-    );
-  });
-
-  if (wide) {
-    return (
-      <div className={`rd-card rd-itemrow rd-itemrow--wide ${urgency}`}>
-        <div className="rd-fill itemrow__body">
-          <StateTag tag={row.tag} />
-          <button type="button" className="rd-itemrow__title rd-ell itemrow__open" onClick={() => onOpen(row.id)}>
-            {row.title}
-          </button>
-          <Meta row={row} />
-        </div>
-        <div className="rd-actions--wide">{buttons}</div>
-      </div>
-    );
-  }
+export default function ItemRow({ row, disabled, onAction, onOpen }) {
   return (
-    <div className={`rd-card rd-itemrow ${urgency}`}>
-      <StateTag tag={row.tag} />
-      <button type="button" className="rd-itemrow__title rd-ell itemrow__open" onClick={() => onOpen(row.id)}>
-        {row.title}
-      </button>
-      <Meta row={row} />
-      <div className="rd-actions">{buttons}</div>
-    </div>
+    <RowShell segment={row.segment}>
+      <RowText title={row.title} segment={row.segment} creator={row.creator} sub={row.sub} onOpen={() => onOpen(row.id)} />
+      {row.label && <span className={`hrow__label hrow__label--${row.tone}`}>{row.label}</span>}
+      <div className="hrow__actions">
+        {row.actions.map((key) => {
+          const action = ACTIONS[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              className="hrow__btn"
+              disabled={disabled}
+              aria-label={`${action.aria}: ${row.title}`}
+              title={action.aria}
+              onClick={(e) => onAction(key, row, e.currentTarget)}
+            >
+              <Icon name={action.icon} size={20} />
+            </button>
+          );
+        })}
+      </div>
+    </RowShell>
   );
 }

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dayHint, dueShortcuts, followUpOptions, longDate, shortDate, snoozeOptions } from '../src/lib/dates.js';
-import { removeAttentionRow } from '../src/lib/homeState.js';
+import { ATTENTION_SECTIONS, columnCount, removeAttentionRow } from '../src/lib/homeState.js';
 import { plural } from '../src/lib/text.js';
 
 test('headers read like the design', () => {
@@ -34,10 +34,34 @@ test('day hints use the weekday close by and the date further out', () => {
   assert.equal(dayHint('2026-10-27', '2026-10-20'), 'Tue, Oct 27');
 });
 
-test('removing a row leaves the rest alone', () => {
-  const home = { needsAttention: [{ id: 'a' }, { id: 'b' }], other: 1 };
-  assert.deepEqual(removeAttentionRow(home, 'a'), { needsAttention: [{ id: 'b' }], other: 1 });
+test('removing a row takes it out of every Home list and keeps the count honest', () => {
+  const home = {
+    attention: { overdue: [{ id: 'a' }], today: [{ id: 'b' }, { id: 'c' }], tomorrow: [], restOfWeek: [{ id: 'd' }] },
+    attentionCount: 4,
+    followUps: [{ id: 'b' }, { id: 'e' }],
+    other: 1,
+  };
+  assert.deepEqual(removeAttentionRow(home, 'b'), {
+    attention: { overdue: [{ id: 'a' }], today: [{ id: 'c' }], tomorrow: [], restOfWeek: [{ id: 'd' }] },
+    attentionCount: 3,
+    followUps: [{ id: 'e' }],
+    other: 1,
+  });
   assert.equal(removeAttentionRow(null, 'a'), null);
+});
+
+test('Home shows three columns when wide, two when medium, one on a phone', () => {
+  assert.equal(columnCount(1300, false), 3);
+  assert.equal(columnCount(1040, false), 3);
+  assert.equal(columnCount(900, false), 2);
+  assert.equal(columnCount(700, false), 2);
+  assert.equal(columnCount(390, true), 1);
+  assert.equal(columnCount(0, true), 3);
+  assert.equal(columnCount(0, false), 1);
+});
+
+test('the four Needs attention sections keep their order', () => {
+  assert.deepEqual(ATTENTION_SECTIONS.map((s) => s.title), ['Overdue', 'Today', 'Tomorrow', 'Rest of the week']);
 });
 
 test('plural', () => {

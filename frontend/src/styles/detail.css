@@ -230,15 +230,3 @@ button.itemrow__open:hover .rd-fill,
 button.rd-itemrow__title:hover {
   text-decoration: underline;
 }
-button.nextup__item,
-button.recent__item {
-  width: 100%;
-  min-height: var(--target-min);
-  text-align: left;
-}
-button.nextup__item {
-  display: flex;
-}
-button.recent__item {
-  display: flex;
-}

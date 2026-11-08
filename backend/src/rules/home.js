@@ -1,5 +1,6 @@
 import { addDays, daysBetween, endOfWeek, monthDay, todayInZone, weekdayShort } from '../dates.js';
-import { effectiveState, needsAttention } from './needsAttention.js';
+import { effectiveState } from './needsAttention.js';
+import { attentionSections, followUpRows, notesPreview } from './homeBoxes.js';
 
 function nextDueLabel(dueDate, today) {
   const diff = daysBetween(today, dueDate);
@@ -42,25 +43,23 @@ export function nextUp(items, today) {
     .map((i) => ({ id: i.id, title: i.title, dueDate: i.due_date, dayLabel: weekdayShort(i.due_date), segment: segmentRef(i) }));
 }
 
-export function recentlyCompleted(done, timeZone) {
-  return done.map((i) => ({
-    id: i.id,
-    title: i.title,
-    by: i.completed_by ?? i.creator ?? '',
-    dayLabel: weekdayShort(todayInZone(i.completed_at, timeZone)),
-  }));
-}
+const SHOPPING_SHOWN = 4;
 
-export function buildHome({ openItems, doneItems, segments, now, timeZone, nudgeDays }) {
+// Home: the four date sections, open follow-ups, and small previews of Shopping Lists and Notes
+export function buildHome({ openItems, shoppingOpen = [], now, timeZone }) {
   const today = todayInZone(now, timeZone);
-  const attention = needsAttention(openItems, { now, timeZone, nudgeDays });
+  const attention = attentionSections(openItems, { now, timeZone });
   return {
     today,
     weekEnd: endOfWeek(today),
-    needsAttention: attention,
-    nextUp: nextUp(openItems, today),
-    segments: segmentCards(segments, openItems, today),
+    attention,
+    attentionCount: Object.values(attention).reduce((n, rows) => n + rows.length, 0),
+    followUps: followUpRows(openItems, { now, timeZone }),
     inboxCount: openItems.filter((i) => i.state === 'inbox').length,
-    recentlyCompleted: recentlyCompleted(doneItems, timeZone),
+    notes: notesPreview(openItems),
+    shopping: {
+      count: shoppingOpen.length,
+      lists: shoppingOpen.slice(0, SHOPPING_SHOWN).map((l) => ({ id: l.id, title: l.title, total: l.total, checked: l.checked })),
+    },
   };
 }

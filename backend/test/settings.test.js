@@ -126,12 +126,11 @@ test('the three daily emails each have their own switch and time', async () => {
   await call('PATCH', '/api/settings', { digestSlots: { morning: { time: '08:00' }, afternoon: { enabled: true }, evening: { time: '18:00' } } });
 });
 
-test('changing the nudge days changes what Home shows', async () => {
-  const five = JSON.stringify((await call('GET', '/api/home')).body);
+test('changing the nudge days is saved (Home lists every open follow-up now; the emails still use it)', async () => {
   await call('PATCH', '/api/settings', { nudgeDays: 1 });
-  const one = JSON.stringify((await call('GET', '/api/home')).body);
+  assert.equal((await call('GET', '/api/settings')).body.household.nudgeDays, 1);
   await call('PATCH', '/api/settings', { nudgeDays: 5 });
-  assert.notEqual(five, one);
+  assert.equal((await call('GET', '/api/settings')).body.household.nudgeDays, 5);
 });
 
 test('segments: create, rename, recolor, duplicate names, reorder', async () => {
