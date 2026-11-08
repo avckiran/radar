@@ -260,9 +260,10 @@ test('a person from another household cannot read or change this household’s d
 
   // what they can list is only their own
   const homeBody = (await call('GET', '/api/home', { token: outsider })).body;
-  assert.deepEqual(homeBody.segments.map((s) => s.name), ['Secret stuff']);
   assert.equal(homeBody.household.name, 'Somebody else');
   assert.ok(!JSON.stringify(homeBody).includes('Renew car registration'));
+  assert.deepEqual(homeBody.shopping, { count: 0, lists: [] });
+  assert.ok(!JSON.stringify(homeBody).includes('Whole Foods'));
   const list = await call('GET', '/api/segments', { token: outsider });
   assert.deepEqual(list.body.segments.map((s) => s.name), ['Secret stuff']);
   assert.equal(list.body.household.name, 'Somebody else');

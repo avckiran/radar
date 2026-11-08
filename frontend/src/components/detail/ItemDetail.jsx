@@ -4,7 +4,6 @@ import Skeleton from '../ui/Skeleton.jsx';
 import Overlay from '../ui/Overlay.jsx';
 import StateTag from '../home/StateTag.jsx';
 import SnoozePicker from '../home/SnoozePicker.jsx';
-import WaitingForm from '../home/WaitingForm.jsx';
 import Field from './Field.jsx';
 import Timeline from './Timeline.jsx';
 import WaitingBlock from './WaitingBlock.jsx';
@@ -207,12 +206,6 @@ export default function ItemDetail({ itemId, mode, onClose }) {
         Snooze
       </button>
     ),
-    waiting: (
-      <button key="waiting" type="button" className="rd-btn" disabled={disabled || busyAction} onClick={() => setDialog('waiting')}>
-        <Icon name="hourglass" size={18} />
-        Follow-up
-      </button>
-    ),
     back: (
       <button key="back" type="button" className="rd-btn" disabled={disabled || busyAction} onClick={() => runAction('reopen', {}, { success: 'Back to active' })}>
         <Icon name="back" size={18} />
@@ -359,17 +352,6 @@ export default function ItemDetail({ itemId, mode, onClose }) {
         <Overlay label="Snooze" onClose={closeDialog}>
           <h2 className="rd-t-item-title">Snooze until</h2>
           <SnoozePicker today={today} onPick={(until) => runAction('snooze', { until }, { success: `Snoozed until ${dayHint(until, today)}` })} onCancel={closeDialog} />
-        </Overlay>
-      )}
-      {dialog === 'waiting' && (
-        <Overlay label="Mark as follow-up" onClose={closeDialog}>
-          <WaitingForm
-            today={today}
-            busy={busyAction}
-            error={formError}
-            onCancel={closeDialog}
-            onSubmit={(values) => runAction('waiting', values, { success: 'Marked as follow-up' })}
-          />
         </Overlay>
       )}
       {dialog === 'reset' && (
