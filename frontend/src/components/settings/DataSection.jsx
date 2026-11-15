@@ -110,12 +110,6 @@ export default function DataSection({ data, canEdit, online, onDeleteArchived, o
         </Card>
       </Group>
 
-      <Group title="Notifications">
-        <div className="rd-reserved settings-reserved">
-          <Row icon="alert" label="Push notifications" pill="Later" disabled />
-        </div>
-      </Group>
-
       {confirming && (
         <SheetFrame title="Delete archived items?" label="Delete archived items" onClose={() => setConfirming(false)}>
           <DeleteArchived archived={archived} onConfirm={onDeleteArchived} onClose={() => setConfirming(false)} />

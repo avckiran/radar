@@ -94,17 +94,18 @@ test('the daily email can be switched off and on, and only with a real true or f
 
 test('the three daily emails each have their own switch and time', async () => {
   const first = (await call('GET', '/api/settings')).body.me.digestSlots;
+  // push (the same email as a notification) is off until a person turns it on
   assert.deepEqual(first, {
-    morning: { enabled: true, time: '08:00' },
-    afternoon: { enabled: true, time: '14:00' },
-    evening: { enabled: true, time: '18:00' },
+    morning: { enabled: true, push: false, time: '08:00' },
+    afternoon: { enabled: true, push: false, time: '14:00' },
+    evening: { enabled: true, push: false, time: '18:00' },
   });
   const changed = await call('PATCH', '/api/settings', { digestSlots: { afternoon: { enabled: false }, evening: { time: '19:30' } } });
   assert.equal(changed.status, 200);
   assert.deepEqual(changed.body.me.digestSlots, {
-    morning: { enabled: true, time: '08:00' },
-    afternoon: { enabled: false, time: '14:00' },
-    evening: { enabled: true, time: '19:30' },
+    morning: { enabled: true, push: false, time: '08:00' },
+    afternoon: { enabled: false, push: false, time: '14:00' },
+    evening: { enabled: true, push: false, time: '19:30' },
   });
   // the old morning field still works and stays in step
   const morning = await call('PATCH', '/api/settings', { digestSlots: { morning: { time: '07:00' } } });

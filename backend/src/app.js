@@ -7,6 +7,7 @@ import { inboxRouter } from './routes/inbox.js';
 import { searchRouter } from './routes/search.js';
 import { settingsRouter } from './routes/settings.js';
 import { shoppingRouter } from './routes/shopping.js';
+import { pushRouter } from './routes/push.js';
 import { HttpError } from './errors.js';
 import helmet from 'helmet';
 import { createAuth } from './auth.js';
@@ -25,7 +26,7 @@ function explainDbError(err) {
 }
 
 // `authenticate` can be replaced in tests; real use always goes through sign-in (jwtSecret)
-export function createApp({ db, corsOrigins, now, jwtSecret, trustProxy = 0, authenticate }) {
+export function createApp({ db, corsOrigins, now, jwtSecret, trustProxy = 0, authenticate, pusher = null }) {
   const app = express();
   app.disable('x-powered-by');
   if (trustProxy) app.set('trust proxy', trustProxy);
@@ -87,6 +88,7 @@ export function createApp({ db, corsOrigins, now, jwtSecret, trustProxy = 0, aut
   app.use('/api/items', itemsRouter({ db, now }));
   app.use('/api/search', searchRouter({ db, now }));
   app.use('/api/shopping', shoppingRouter({ db, now }));
+  app.use('/api/push', pushRouter({ db, pusher, now }));
   app.use('/api', settingsRouter({ db, now }));
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));

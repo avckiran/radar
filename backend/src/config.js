@@ -24,5 +24,10 @@ export const config = {
   mailFrom: process.env.MAIL_FROM || '',
   // Where links in emails point: the address of the front end (GitHub Pages)
   appUrl: process.env.APP_URL || 'http://localhost:5173',
+  // Web push notifications. Make the pair once with: npm run push:keys -w backend. Leave empty and push stays off.
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || '',
+  // Who the push services can contact about this server: a mailto: address or a web address. Defaults to APP_URL.
+  vapidSubject: process.env.VAPID_SUBJECT || '',
   dbSslCaPath: process.env.DB_SSL_CA_PATH || '',
 };
