@@ -13,6 +13,7 @@
     "auth:sync": "node scripts/auth-sync.js",
     "digest:preview": "node scripts/digest-preview.js",
     "digest:send-test": "node scripts/digest-send.js",
+    "push:keys": "node scripts/push-keys.js",
     "digest:colors": "node scripts/build-email-colors.mjs",
     "backup:check": "node scripts/backup-check.js",
     "notify": "node scripts/notify.js"
@@ -25,7 +26,8 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.3.1",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.14"

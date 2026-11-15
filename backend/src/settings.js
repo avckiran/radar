@@ -1,6 +1,7 @@
 import { withTransaction } from './db.js';
 import { HttpError } from './errors.js';
 import { SEGMENT_COLORS } from './segmentColors.js';
+import { listDevices } from './push.js';
 
 const NAME_MAX = 60;
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -8,9 +9,9 @@ const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
 // The three daily emails. Morning keeps the original digest_time column.
 export const SLOTS = ['morning', 'afternoon', 'evening'];
 const SLOT_COLUMNS = {
-  morning: { enabled: 'digest_morning_enabled', time: 'digest_time' },
-  afternoon: { enabled: 'digest_afternoon_enabled', time: 'digest_afternoon_time' },
-  evening: { enabled: 'digest_evening_enabled', time: 'digest_evening_time' },
+  morning: { enabled: 'digest_morning_enabled', push: 'digest_morning_push', time: 'digest_time' },
+  afternoon: { enabled: 'digest_afternoon_enabled', push: 'digest_afternoon_push', time: 'digest_afternoon_time' },
+  evening: { enabled: 'digest_evening_enabled', push: 'digest_evening_push', time: 'digest_evening_time' },
 };
 
 export function validTimeZone(zone) {
@@ -24,13 +25,14 @@ export function validTimeZone(zone) {
 }
 
 export async function loadSettings(db, ctx) {
-  const [household, me, members, segments, archived] = await Promise.all([
+  const [household, me, members, segments, archived, devices] = await Promise.all([
     db.query('select name, time_zone, nudge_days from households where id = $1', [ctx.householdId]),
     db.query(
       `select id, username, display_name, is_owner, email, digest_enabled,
               digest_morning_enabled, to_char(digest_time, 'HH24:MI') as digest_time,
               digest_afternoon_enabled, to_char(digest_afternoon_time, 'HH24:MI') as digest_afternoon_time,
-              digest_evening_enabled, to_char(digest_evening_time, 'HH24:MI') as digest_evening_time
+              digest_evening_enabled, to_char(digest_evening_time, 'HH24:MI') as digest_evening_time,
+              digest_morning_push, digest_afternoon_push, digest_evening_push
          from users where id = $1 and household_id = $2`,
       [ctx.user.id, ctx.householdId]
     ),
@@ -55,6 +57,7 @@ export async function loadSettings(db, ctx) {
          from items where household_id = $1`,
       [ctx.householdId]
     ),
+    listDevices(db, ctx),
   ]);
   const hh = household.rows[0];
   const mine = me.rows[0];
@@ -69,10 +72,11 @@ export async function loadSettings(db, ctx) {
       digestTime: mine.digest_time,
       digestEnabled: mine.digest_enabled,
       digestSlots: {
-        morning: { enabled: mine.digest_morning_enabled, time: mine.digest_time },
-        afternoon: { enabled: mine.digest_afternoon_enabled, time: mine.digest_afternoon_time },
-        evening: { enabled: mine.digest_evening_enabled, time: mine.digest_evening_time },
+        morning: { enabled: mine.digest_morning_enabled, push: mine.digest_morning_push, time: mine.digest_time },
+        afternoon: { enabled: mine.digest_afternoon_enabled, push: mine.digest_afternoon_push, time: mine.digest_afternoon_time },
+        evening: { enabled: mine.digest_evening_enabled, push: mine.digest_evening_push, time: mine.digest_evening_time },
       },
+      pushDevices: devices.map((d) => ({ id: d.id, label: d.label, hash: d.hash, addedAt: d.addedAt })),
       hasEmail: Boolean(mine.email),
     },
     members: members.rows.map((m) => ({
@@ -135,6 +139,10 @@ export async function updateSettings(db, ctx, input) {
       if ('enabled' in change) {
         if (typeof change.enabled !== 'boolean') throw new HttpError(400, `Choose on or off for the ${name} email.`);
         mine[SLOT_COLUMNS[name].enabled] = change.enabled;
+      }
+      if ('push' in change) {
+        if (typeof change.push !== 'boolean') throw new HttpError(400, `Choose on or off for the ${name} notification.`);
+        mine[SLOT_COLUMNS[name].push] = change.push;
       }
       if ('time' in change) mine[SLOT_COLUMNS[name].time] = pickTime(change.time);
     }

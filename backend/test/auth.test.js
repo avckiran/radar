@@ -127,6 +127,11 @@ const ROUTES = [
   ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/items'],
   ['PATCH', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
   ['DELETE', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
+  ['GET', '/api/push/config'],
+  ['POST', '/api/push/subscribe'],
+  ['POST', '/api/push/unsubscribe'],
+  ['POST', '/api/push/test'],
+  ['DELETE', '/api/push/devices/00000000-0000-4000-8000-000000000001'],
   ['GET', '/api/something-that-does-not-exist'],
 ];
 

@@ -401,3 +401,37 @@
 .digest-slot--off .settings-row__label {
   color: var(--ink-3);
 }
+
+/* Each time of day: label and time on one line, the two ways of hearing from RADAR (email, notification) on the next */
+.digest-slot {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.digest-slot__channels {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-24);
+}
+.digest-slot--off .digest-slot__channels {
+  color: var(--ink-2);
+}
+.settings-check-line {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.notify-row {
+  flex-wrap: wrap;
+}
+.notify-row__hint {
+  white-space: normal;
+}
+.notify-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.notify-row__here {
+  margin-left: var(--space-8);
+}
