@@ -80,7 +80,7 @@ export default function Sidebar() {
       <NavItem to="/inbox" icon="inbox" label="Inbox" count={data?.inboxCount ?? 0} />
       <NavItem to="/search" icon="search" label="Search" hint="/" />
       <NavItem to="/shopping" icon="cart" label="Shopping Lists" />
-      <SoonItem icon="refresh" label="Trackers" />
+      <NavItem to="/trackers" icon="refresh" label="Trackers" />
       <SoonItem icon="cal" label="Calendar" />
 
       <div className="rd-overline nav-overline">Segments</div>

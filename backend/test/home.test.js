@@ -117,6 +117,7 @@ test('GET /api/home returns the page in one call', async () => {
       if (sql.includes('from users where')) return { rows: [{ id: 'u1', display_name: 'Chandra', is_owner: true }] };
       if (sql.includes("i.state <> 'done'")) return { rows: [row('a', { title: 'Pay rent', due_date: '2026-10-27' })] };
       if (sql.includes('from shopping_lists')) return { rows: [{ id: 'l1', title: 'Whole Foods', note: null, created_at: now, archived_at: null, created_by: 'Chandra', total: 3, checked: 1 }] };
+      if (sql.includes('from trackers') || sql.includes('from tracker_')) return { rows: [] };
       throw new Error(`unexpected query: ${sql}`);
     },
   };
@@ -129,6 +130,7 @@ test('GET /api/home returns the page in one call', async () => {
   assert.equal(body.user.displayName, 'Chandra');
   assert.equal(body.attention.tomorrow[0].title, 'Pay rent');
   assert.equal(body.attentionCount, 1);
+  assert.deepEqual(body.trackers.summary.total, 0);
   assert.deepEqual(body.shopping, { count: 1, lists: [{ id: 'l1', title: 'Whole Foods', total: 3, checked: 1 }] });
   assert.ok(!('segments' in body) && !('nextUp' in body) && !('recentlyCompleted' in body));
 });
