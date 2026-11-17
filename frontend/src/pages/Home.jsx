@@ -5,6 +5,7 @@ import Skeleton from '../components/ui/Skeleton.jsx';
 import Overlay from '../components/ui/Overlay.jsx';
 import ItemRow from '../components/home/ItemRow.jsx';
 import SnoozePicker from '../components/home/SnoozePicker.jsx';
+import HomeTrackers from '../components/trackers/HomeTrackers.jsx';
 import { CalendarBox, FollowUpsBox, NotesBox, ShoppingBox } from '../components/home/HomeBoxes.jsx';
 import { DoneForm } from '../components/detail/DetailForms.jsx';
 import { doneBody } from '../lib/followUp.js';
@@ -135,6 +136,7 @@ export default function Home() {
   );
 
   const inbox = <InboxStrip count={data.inboxCount} />;
+  const trackers = <HomeTrackers trackers={data.trackers} today={today} />;
   const followUps = <FollowUpsBox rows={data.followUps} disabled={disabled} onAction={onAction} onOpen={openItem} />;
   const calendar = <CalendarBox />;
   const shopping = <ShoppingBox shopping={data.shopping} />;
@@ -161,6 +163,7 @@ export default function Home() {
             {inbox}
           </div>
           <div className="home__column">
+            {trackers}
             {followUps}
             {calendar}
           </div>
@@ -177,6 +180,7 @@ export default function Home() {
             {inbox}
           </div>
           <div className="home__column">
+            {trackers}
             {followUps}
             {calendar}
             {shopping}
@@ -188,6 +192,7 @@ export default function Home() {
         <>
           {attention}
           {inbox}
+          {trackers}
           {followUps}
           {shopping}
           {notes}

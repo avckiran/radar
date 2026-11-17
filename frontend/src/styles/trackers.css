@@ -1,0 +1,712 @@
+/* Trackers. Only design tokens, no new colours.
+   done = the emerald tokens, missed = the overdue tokens, skipped = the snoozed tokens. */
+.page.trk {
+  max-width: 880px;
+}
+.trk-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+.trk-dialog__text {
+  margin: 0;
+}
+
+/* Tabs */
+.trk-tabs {
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.trk-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-height: var(--target-min);
+  padding: 0 var(--space-12);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.trk-tab:hover {
+  color: var(--ink);
+}
+.trk-tab[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.trk-tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+@media (min-width: 768px) {
+  .trk-tab {
+    flex: 0 0 auto;
+    min-width: 96px;
+  }
+}
+
+/* Day and week navigation */
+.trk-daynav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.trk-daynav__btn {
+  flex: none;
+  width: var(--target-min);
+  padding: 0;
+}
+.trk-daynav__label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: center;
+}
+.trk-daynav__title {
+  margin: 0;
+}
+.trk-flip {
+  display: inline-flex;
+  transform: scaleX(-1);
+}
+
+/* Summary of the day */
+.trk-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-16);
+}
+.trk-summary--win {
+  background: var(--seg-emerald-bg);
+  border-color: var(--seg-emerald-dot);
+  color: var(--seg-emerald-fg);
+}
+.trk-summary--win .rd-muted,
+.trk-summary--win .rd-quiet {
+  color: var(--seg-emerald-fg);
+}
+.trk-ring {
+  --p: 0;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(var(--seg-emerald-dot) calc(var(--p) * 1%), var(--surface-2) 0);
+  border: 1px solid var(--border);
+}
+.trk-ring::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+.trk-ring--win::before {
+  background: var(--seg-emerald-bg);
+}
+.trk-ring__text {
+  position: relative;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.trk-ring--win .trk-ring__text {
+  color: var(--seg-emerald-fg);
+}
+.trk-empty {
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.trk-empty p {
+  margin: 0;
+}
+
+/* Rows */
+.trk-list {
+  padding: 0;
+  overflow: hidden;
+}
+.trk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-8) 0 0;
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+.trk-row:last-child {
+  border-bottom: 0;
+}
+.trk-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-8);
+}
+.trk-row__title {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  min-height: 0;
+}
+.trk-row__title:hover {
+  text-decoration: underline;
+}
+.trk-row__title:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.trk-row__title--plain {
+  cursor: default;
+}
+.trk-row__title--plain:hover {
+  text-decoration: none;
+}
+.trk-row__meta {
+  overflow-wrap: anywhere;
+}
+.trk-row__tag,
+.trk-row__action {
+  flex: none;
+}
+.trk-row__action {
+  min-width: var(--target-min);
+}
+.trk-row--done .trk-row__title {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.trk-row--skipped .trk-row__title {
+  color: var(--ink-3);
+}
+.trk-row--home {
+  padding-right: 0;
+}
+
+/* Check button: a 44px press area around a 26px box */
+.trk-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.trk-check__box {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--surface);
+}
+.trk-check:hover .trk-check__box {
+  border-color: var(--ink);
+}
+.trk-check--on .trk-check__box {
+  background: var(--seg-emerald-dot);
+  border-color: var(--seg-emerald-dot);
+}
+.trk-check:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.trk-check:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Status dots (day outcomes) and heat map cells share their colours */
+.trk-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+}
+.trk-dot--win {
+  background: var(--seg-emerald-dot);
+  border-color: var(--seg-emerald-dot);
+  color: var(--surface);
+}
+.trk-dot--miss {
+  background: var(--overdue-bg);
+  border-color: var(--overdue-bg);
+  color: var(--overdue-fg);
+}
+.trk-dot--open {
+  background: var(--surface);
+  border-color: var(--ink);
+}
+.trk-dot--rest {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.trk-dot--upcoming {
+  background: transparent;
+  border-color: var(--border);
+  border-style: dashed;
+}
+
+/* The week */
+.trk-glance {
+  padding: var(--space-12) var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.trk-glance__head {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--space-8);
+}
+.trk-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.trk-cellwrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.trk-cell__dow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.trk-cell__dow--today {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.trk-cell {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: var(--target-min);
+  height: var(--target-min);
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.trk-cell > span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-weight: 700;
+}
+.trk-cell--done > span {
+  background: var(--seg-emerald-dot);
+  border-color: var(--seg-emerald-dot);
+  color: var(--surface);
+}
+.trk-cell--missed > span {
+  background: var(--overdue-bg);
+  border-color: var(--overdue-bg);
+  color: var(--overdue-fg);
+}
+.trk-cell--skipped > span {
+  background: var(--snoozed-bg);
+  border-color: var(--snoozed-border);
+  color: var(--snoozed-fg);
+}
+.trk-cell--open > span {
+  border-color: var(--ink);
+}
+.trk-cell--off > span {
+  border-color: transparent;
+  background: transparent;
+}
+.trk-cell--upcoming > span {
+  border-style: dashed;
+}
+.trk-cell:disabled {
+  cursor: default;
+}
+.trk-cell:not(:disabled):hover > span {
+  border-color: var(--ink);
+}
+.trk-cell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.trk-weekrow {
+  padding: var(--space-12) var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.trk-weekrow__head {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--space-8);
+  min-width: 0;
+}
+.trk-weekrow__title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.trk-weekrow__warn {
+  margin: 0;
+  padding-inline: var(--space-8);
+  color: var(--soon-fg);
+}
+
+/* Progress */
+.trk-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.trk-filters__pick {
+  display: block;
+}
+.trk-select {
+  width: 100%;
+  min-height: var(--target-min);
+}
+.trk-segmented button {
+  min-height: var(--target-min);
+  height: auto;
+  padding-inline: var(--space-8);
+}
+@media (min-width: 768px) {
+  .trk-filters {
+    flex-direction: row;
+    align-items: center;
+  }
+  .trk-filters .trk-segmented {
+    flex: 0 1 420px;
+  }
+  .trk-filters__pick {
+    flex: 1;
+  }
+}
+.trk-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+@media (min-width: 768px) {
+  .trk-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.trk-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-12) var(--space-16);
+}
+.trk-tile__value {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+}
+.trk-milestone {
+  margin: 0;
+}
+.trk-insights {
+  margin: 0;
+  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.trk-heat {
+  padding: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.trk-heat h3 {
+  margin: 0;
+}
+.trk-heat__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 560px;
+}
+.trk-heat__week {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  gap: 4px;
+}
+.trk-heat__cell {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.trk-heat__cell.trk-dot--win {
+  border-color: var(--seg-emerald-dot);
+}
+.trk-heat__cell.trk-dot--miss {
+  border-color: var(--overdue-bg);
+}
+.trk-heat__cell.trk-dot--open {
+  border-color: var(--ink);
+  background: var(--surface);
+}
+.trk-heat__cell.trk-dot--upcoming {
+  background: transparent;
+  border-style: dotted;
+}
+.trk-heat__cell--today {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.trk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+}
+.trk-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.trk-legend__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border-width: 1px;
+}
+.trk-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-12);
+}
+.trk-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  min-width: 0;
+}
+.trk-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+.trk-card__title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.trk-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  margin: 0;
+}
+.trk-card__stats div {
+  min-width: 0;
+}
+.trk-card__stats dt {
+  font-size: 12px;
+}
+.trk-card__stats dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.trk-card__counts {
+  margin: 0;
+}
+.trk-card__actions {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.trk-trend {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 36px;
+}
+.trk-trend__col {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+.trk-trend__bar {
+  display: block;
+  width: 6px;
+  border-radius: 2px;
+  background: var(--seg-emerald-dot);
+}
+.trk-trend__bar--none {
+  background: var(--border);
+}
+
+/* All trackers */
+.trk-manage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) 0 0;
+}
+.trk-manage__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--target-min);
+  padding: var(--space-12) var(--space-16);
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.trk-manage__main:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: var(--radius-card);
+}
+.trk-manage__title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* The add / edit form */
+.trk-form .rd-segmented {
+  width: 100%;
+}
+.trk-days {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+.trk-day {
+  flex: 1 1 0;
+  min-width: var(--target-min);
+  padding: 0;
+  justify-content: center;
+}
+.trk-day[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
+.trk-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.trk-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.trk-inline .trk-select {
+  width: auto;
+  flex: 1 1 200px;
+}
+.trk-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--target-min);
+  cursor: pointer;
+}
+
+/* Home card */
+.trk-home {
+  padding: var(--space-8) 0 0;
+  overflow: hidden;
+}
+.trk-home__summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: var(--space-4) var(--space-16) var(--space-4);
+}
+.trk-home__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.trk-home__more {
+  display: flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0 var(--space-16);
+}
+
+/* On wide screens the form sits in a centered dialog. It is taller than the
+   shared "expanded" box, so let the dialog size itself and scroll if needed. */
+.overlay--center .overlay__panel--expanded:has(.trk-form) {
+  width: min(520px, calc(100vw - 32px));
+  height: auto;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { buildHome } from '../rules/home.js';
 import { ITEM_COLUMNS, ITEM_JOINS } from '../queries.js';
 import { listShopping } from '../shopping.js';
+import { homeTrackers } from '../trackers.js';
 
 export function homeRouter({ db, now = () => new Date() }) {
   const router = Router();
@@ -17,10 +18,12 @@ export function homeRouter({ db, now = () => new Date() }) {
       [ctx.householdId]
     );
     const shopping = await listShopping(db, ctx);
+    const trackers = await homeTrackers(db, ctx, now());
 
     res.json({
       household: { name: ctx.householdName },
       user: ctx.user,
+      trackers,
       ...buildHome({
         openItems: open.rows,
         shoppingOpen: shopping.open,

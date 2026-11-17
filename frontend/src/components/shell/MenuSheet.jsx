@@ -30,10 +30,13 @@ export default function MenuSheet({ onClose }) {
             <Icon name="cart" />
             <span className="rd-fill">Shopping Lists</span>
           </NavLink>
+          <NavLink to="/trackers" className="rd-nav" onClick={onClose}>
+            <Icon name="refresh" />
+            <span className="rd-fill">Trackers</span>
+          </NavLink>
           <div className="rd-overline nav-overline">Segments</div>
           <SegmentLinks onNavigate={onClose} />
           <div className="rd-overline nav-overline">Coming later</div>
-          <SoonItem icon="refresh" label="Trackers" />
           <SoonItem icon="cal" label="Calendar" />
           <NavLink to="/settings" className="rd-nav" onClick={onClose}>
             <Icon name="gear" />

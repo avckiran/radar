@@ -38,17 +38,38 @@ const SHOPPING_ITEM_SQL = `select i.id, i.list_id, l.title as list_title, i.text
                              left join users c on c.id = i.checked_by
                             where i.household_id = $1 order by i.created_at, i.seq`;
 
+// Only the signed-in person's own trackers and the household ones: a personal tracker is private to its owner
+const TRACKER_SQL = `select t.id, t.scope, o.display_name as owner, t.title, t.note, t.part, t.start_date, t.end_date,
+                            t.created_at, t.updated_at, t.deleted_at
+                       from trackers t join users o on o.id = t.owner_id
+                      where t.household_id = $1 and (t.scope = 'household' or t.owner_id = $2)
+                      order by t.created_at, t.id`;
+const TRACKER_SCHEDULE_SQL = `select s.id, s.tracker_id, t.title as tracker_title, s.effective_from, s.kind, s.days, s.interval_days,
+                                     s.anchor_date, s.per_week, s.created_at
+                                from tracker_schedules s join trackers t on t.id = s.tracker_id
+                               where t.household_id = $1 and (t.scope = 'household' or t.owner_id = $2)
+                               order by s.created_at, s.seq`;
+const TRACKER_CHECKIN_SQL = `select c.id, c.tracker_id, t.title as tracker_title, c.local_date, c.status, c.note,
+                                    u.display_name as checked_by, c.created_at, c.updated_at
+                               from tracker_checkins c join trackers t on t.id = c.tracker_id
+                               left join users u on u.id = c.user_id
+                              where t.household_id = $1 and (t.scope = 'household' or t.owner_id = $2)
+                              order by c.local_date, c.created_at, c.id`;
+
 const camel = (s) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 const mapRow = (row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [camel(k), v]));
 
 export async function loadExport(db, ctx, now) {
-  const [users, segments, items, events, shoppingLists, shoppingItems] = await Promise.all([
+  const [users, segments, items, events, shoppingLists, shoppingItems, trackers, trackerSchedules, trackerCheckins] = await Promise.all([
     db.query(USER_SQL, [ctx.householdId]),
     db.query(SEGMENT_SQL, [ctx.householdId]),
     db.query(ITEM_SQL, [ctx.householdId]),
     db.query(EVENT_SQL, [ctx.householdId]),
     db.query(SHOPPING_LIST_SQL, [ctx.householdId]),
     db.query(SHOPPING_ITEM_SQL, [ctx.householdId]),
+    db.query(TRACKER_SQL, [ctx.householdId, ctx.user.id]),
+    db.query(TRACKER_SCHEDULE_SQL, [ctx.householdId, ctx.user.id]),
+    db.query(TRACKER_CHECKIN_SQL, [ctx.householdId, ctx.user.id]),
   ]);
   return {
     exportedAt: now.toISOString(),
@@ -59,6 +80,9 @@ export async function loadExport(db, ctx, now) {
     events: events.rows.map(mapRow),
     shoppingLists: shoppingLists.rows.map(mapRow),
     shoppingItems: shoppingItems.rows.map(mapRow),
+    trackers: trackers.rows.map(mapRow),
+    trackerSchedules: trackerSchedules.rows.map(mapRow),
+    trackerCheckins: trackerCheckins.rows.map(mapRow),
   };
 }
 
@@ -74,6 +98,9 @@ export function buildCsvFiles(data) {
     'users.csv': data.users,
     'shopping-lists.csv': data.shoppingLists,
     'shopping-items.csv': data.shoppingItems,
+    'trackers.csv': data.trackers,
+    'tracker-schedules.csv': data.trackerSchedules,
+    'tracker-checkins.csv': data.trackerCheckins,
   };
   const first = {
     'items.csv': ['id', 'kind', 'state', 'title', 'segment', 'segmentId', 'body', 'url', 'description', 'dueDate', 'snoozedUntil', 'waitingOn', 'followUpDate', 'waitingSince', 'completedAt', 'createdBy', 'createdAt', 'updatedAt', 'deletedAt'],
@@ -82,10 +109,13 @@ export function buildCsvFiles(data) {
     'users.csv': ['id', 'username', 'displayName', 'email', 'isOwner', 'digestEnabled', 'digestMorningEnabled', 'digestMorningTime', 'digestAfternoonEnabled', 'digestAfternoonTime', 'digestEveningEnabled', 'digestEveningTime', 'createdAt'],
     'shopping-lists.csv': ['id', 'title', 'note', 'createdBy', 'createdAt', 'updatedAt', 'archivedAt', 'archivedBy', 'deletedAt'],
     'shopping-items.csv': ['id', 'listId', 'listTitle', 'text', 'checkedAt', 'checkedBy', 'createdBy', 'createdAt', 'updatedAt', 'deletedAt'],
+    'trackers.csv': ['id', 'scope', 'owner', 'title', 'note', 'part', 'startDate', 'endDate', 'createdAt', 'updatedAt', 'deletedAt'],
+    'tracker-schedules.csv': ['id', 'trackerId', 'trackerTitle', 'effectiveFrom', 'kind', 'days', 'intervalDays', 'anchorDate', 'perWeek', 'createdAt'],
+    'tracker-checkins.csv': ['id', 'trackerId', 'trackerTitle', 'localDate', 'status', 'note', 'checkedBy', 'createdAt', 'updatedAt'],
   };
   return Object.entries(sets).map(([name, rows]) => ({
     name,
-    data: toCsv(columns(first[name]), rows.map((r) => ({ ...r, allowedKinds: Array.isArray(r.allowedKinds) ? r.allowedKinds.join(' ') : r.allowedKinds }))),
+    data: toCsv(columns(first[name]), rows.map((r) => ({ ...r, allowedKinds: Array.isArray(r.allowedKinds) ? r.allowedKinds.join(' ') : r.allowedKinds, days: Array.isArray(r.days) ? r.days.join(' ') : r.days }))),
   }));
 }
 

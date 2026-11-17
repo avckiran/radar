@@ -12,6 +12,11 @@ import Inbox from './pages/Inbox.jsx';
 import Search from './pages/Search.jsx';
 import Shopping from './pages/Shopping.jsx';
 import ShoppingList from './pages/ShoppingList.jsx';
+import Trackers from './pages/Trackers.jsx';
+import TrackersToday from './pages/TrackersToday.jsx';
+import TrackersWeek from './pages/TrackersWeek.jsx';
+import TrackersProgress from './pages/TrackersProgress.jsx';
+import TrackersManage from './pages/TrackersManage.jsx';
 import Settings from './pages/Settings.jsx';
 import SegmentPage from './pages/SegmentPage.jsx';
 import DevStates from './pages/DevStates.jsx';
@@ -47,6 +52,12 @@ export default function App() {
                   <Route path="search" element={<Search />} />
                   <Route path="shopping" element={<Shopping />} />
                   <Route path="shopping/:listId" element={<ShoppingList />} />
+                  <Route path="trackers" element={<Trackers />}>
+                    <Route index element={<TrackersToday />} />
+                    <Route path="week" element={<TrackersWeek />} />
+                    <Route path="progress" element={<TrackersProgress />} />
+                    <Route path="manage" element={<TrackersManage />} />
+                  </Route>
                   <Route path="settings" element={<Settings />} />
                   <Route path="settings/:section" element={<Settings />} />
                   <Route path="segments/:segmentId" element={<SegmentPage />} />

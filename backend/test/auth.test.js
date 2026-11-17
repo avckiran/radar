@@ -12,6 +12,7 @@ import { buildSeed } from '../src/seedData.js';
 const NOW = new Date('2026-10-26T15:00:00Z');
 const SECRET = 'test-secret-test-secret-test-secret-123456';
 const PW = { avckiran: 'correct horse battery', koarora6: 'second long password!', outsider: 'outsider password 1' };
+const TRK = { tracker: '00000000-0000-4000-8000-0000000000d1', schedule: '00000000-0000-4000-8000-0000000000d2' };
 const SHOP = { list: '00000000-0000-4000-8000-0000000000c1', item: '00000000-0000-4000-8000-0000000000c2' };
 const B = { household: '00000000-0000-4000-8000-0000000000b1', user: '00000000-0000-4000-8000-0000000000b2', segment: '00000000-0000-4000-8000-0000000000b3', item: '00000000-0000-4000-8000-0000000000b4' };
 
@@ -73,6 +74,8 @@ before(async () => {
   await insert('items', { id: B.item, household_id: B.household, segment_id: B.segment, kind: 'action', state: 'active', title: 'Outsider zebra plan', created_by: B.user, created_at: NOW, updated_at: NOW });
   await insert('shopping_lists', { id: SHOP.list, household_id: seed.household.id, title: 'Whole Foods secret', created_by: seed.users[0].id });
   await insert('shopping_items', { id: SHOP.item, list_id: SHOP.list, household_id: seed.household.id, text: 'Oat milk', created_by: seed.users[0].id });
+  await insert('trackers', { id: TRK.tracker, household_id: seed.household.id, owner_id: seed.users[0].id, scope: 'household', title: 'Secret pill tracker', start_date: '2026-10-01' });
+  await insert('tracker_schedules', { tracker_id: TRK.tracker, household_id: seed.household.id, effective_from: '2026-10-01', kind: 'days', days: '{0,1,2,3,4,5,6}' });
   await insert('item_events', { item_id: B.item, household_id: B.household, type: 'created', to_state: 'active', note: 'zebra note', actor_id: B.user, created_at: NOW });
 
   const db = { query: (s, p) => pg.query(s, p), connect: async () => ({ query: (s, p) => pg.query(s, p), release() {} }) };
@@ -124,6 +127,19 @@ const ROUTES = [
   ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/archive'],
   ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/reopen'],
   ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/copy'],
+  ['GET', '/api/trackers'],
+  ['POST', '/api/trackers'],
+  ['GET', '/api/trackers/day'],
+  ['GET', '/api/trackers/week'],
+  ['GET', '/api/trackers/progress'],
+  ['PATCH', '/api/trackers/00000000-0000-4000-8000-000000000002'],
+  ['DELETE', '/api/trackers/00000000-0000-4000-8000-000000000002'],
+  ['POST', '/api/trackers/00000000-0000-4000-8000-000000000002/schedule'],
+  ['POST', '/api/trackers/00000000-0000-4000-8000-000000000002/pause'],
+  ['POST', '/api/trackers/00000000-0000-4000-8000-000000000002/resume'],
+  ['POST', '/api/trackers/00000000-0000-4000-8000-000000000002/end'],
+  ['POST', '/api/trackers/00000000-0000-4000-8000-000000000002/checkins/2026-10-26'],
+  ['DELETE', '/api/trackers/00000000-0000-4000-8000-000000000002/checkins/2026-10-26'],
   ['POST', '/api/shopping/00000000-0000-4000-8000-000000000001/items'],
   ['PATCH', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
   ['DELETE', '/api/shopping/00000000-0000-4000-8000-000000000001/items/00000000-0000-4000-8000-000000000002'],
@@ -258,6 +274,16 @@ test('a person from another household cannot read or change this household’s d
   assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/archive`, {})).status, 404);
   assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/copy`, { id: '44444444-4444-4444-8444-444444444444' })).status, 404);
   assert.deepEqual((await call('GET', '/api/shopping', { token: outsider })).body, { open: [], archived: [] });
+  // trackers too, even household ones
+  assert.equal((await denied('PATCH', `/api/trackers/${TRK.tracker}`, { title: 'hacked' })).status, 404);
+  assert.equal((await denied('DELETE', `/api/trackers/${TRK.tracker}`)).status, 404);
+  assert.equal((await denied('POST', `/api/trackers/${TRK.tracker}/schedule`, { kind: 'days', days: [1] })).status, 404);
+  assert.equal((await denied('POST', `/api/trackers/${TRK.tracker}/pause`, {})).status, 404);
+  assert.equal((await denied('POST', `/api/trackers/${TRK.tracker}/end`, {})).status, 404);
+  assert.equal((await denied('POST', `/api/trackers/${TRK.tracker}/checkins/2026-10-26`, {})).status, 404);
+  assert.equal((await denied('DELETE', `/api/trackers/${TRK.tracker}/checkins/2026-10-26`)).status, 404);
+  assert.deepEqual((await call('GET', '/api/trackers', { token: outsider })).body.trackers, []);
+  assert.deepEqual((await call('GET', '/api/trackers/day', { token: outsider })).body.day.groups, []);
   // putting their own item into our segment, or capturing into it, is refused
   await denied('PATCH', `/api/items/${B.item}`, { segmentId: seg.id });
   await denied('POST', '/api/items', { id: '22222222-2222-4222-8222-222222222222', kind: 'action', title: 'sneaky', segmentId: seg.id });
@@ -268,6 +294,8 @@ test('a person from another household cannot read or change this household’s d
   assert.equal(homeBody.household.name, 'Somebody else');
   assert.ok(!JSON.stringify(homeBody).includes('Renew car registration'));
   assert.deepEqual(homeBody.shopping, { count: 0, lists: [] });
+  assert.equal(homeBody.trackers.count, 0);
+  assert.ok(!JSON.stringify(homeBody).includes('Secret pill tracker'));
   assert.ok(!JSON.stringify(homeBody).includes('Whole Foods'));
   const list = await call('GET', '/api/segments', { token: outsider });
   assert.deepEqual(list.body.segments.map((s) => s.name), ['Secret stuff']);
@@ -280,7 +308,7 @@ test('a person from another household cannot read or change this household’s d
   assert.deepEqual(settings.members.map((m) => m.username), ['outsider']);
   assert.deepEqual(settings.segments.map((s) => s.name), ['Secret stuff']);
   const json = JSON.stringify((await call('GET', '/api/export?format=json', { token: outsider })).body);
-  assert.ok(json.includes('zebra') && !json.includes('Renew car registration') && !json.includes('avckiran') && !json.includes('Whole Foods') && !json.includes('Oat milk'));
+  assert.ok(json.includes('zebra') && !json.includes('Renew car registration') && !json.includes('avckiran') && !json.includes('Whole Foods') && !json.includes('Oat milk') && !json.includes('Secret pill tracker'));
   const zip = (await call('GET', '/api/export?format=csv', { token: outsider, raw: true })).buf.toString('utf8');
   assert.ok(zip.includes('zebra') && !zip.includes('Renew car registration') && !zip.includes('avckiran'));
   // deleting "archived" items and changing settings only touch their own household

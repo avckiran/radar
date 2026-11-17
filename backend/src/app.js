@@ -7,6 +7,7 @@ import { inboxRouter } from './routes/inbox.js';
 import { searchRouter } from './routes/search.js';
 import { settingsRouter } from './routes/settings.js';
 import { shoppingRouter } from './routes/shopping.js';
+import { trackersRouter } from './routes/trackers.js';
 import { pushRouter } from './routes/push.js';
 import { HttpError } from './errors.js';
 import helmet from 'helmet';
@@ -88,6 +89,7 @@ export function createApp({ db, corsOrigins, now, jwtSecret, trustProxy = 0, aut
   app.use('/api/items', itemsRouter({ db, now }));
   app.use('/api/search', searchRouter({ db, now }));
   app.use('/api/shopping', shoppingRouter({ db, now }));
+  app.use('/api/trackers', trackersRouter({ db, now }));
   app.use('/api/push', pushRouter({ db, pusher, now }));
   app.use('/api', settingsRouter({ db, now }));
 
