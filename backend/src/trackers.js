@@ -11,11 +11,8 @@ import {
   prepare,
 } from './rules/trackerViews.js';
 
-// Trackers: things done again and again. A personal tracker belongs to one person and nobody else can see it;
-// a household tracker can be seen and ticked by everybody in the household.
-// Nothing is removed for good: deleting a tracker only sets deleted_at. Un-ticking a day removes that day's check-in.
 export const LIMITS = { title: 80, note: 500, skipNote: 200, trackers: 100 };
-export const BACKFILL_DAYS = 7; // today and the six days before it can be ticked or changed
+export const BACKFILL_DAYS = 7;
 
 const NOT_FOUND = 'That tracker wasn’t found. It may have been deleted.';
 const FINISHED = 'This tracker has finished. Make a new one to keep going.';
@@ -49,7 +46,6 @@ function cleanDate(raw, label) {
 
 const isInt = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 
-// A schedule from the screen: { kind: 'days', days: [2] } | { kind: 'interval', intervalDays: 2, anchorDate? } | { kind: 'weekly', perWeek: 4 }
 export function cleanSchedule(raw, fallbackAnchor) {
   const s = obj(raw);
   if (!KINDS.includes(s.kind)) throw new HttpError(400, 'Choose how often this happens.');
@@ -68,11 +64,9 @@ export function cleanSchedule(raw, fallbackAnchor) {
   return { kind: 'weekly', days: null, intervalDays: null, anchorDate: null, perWeek: s.perWeek };
 }
 
-// ---------- loading ----------
 
 const VISIBLE = `t.household_id = $1 and t.deleted_at is null and (t.scope = 'household' or t.owner_id = $2)`;
 
-// Every tracker the signed-in person may see, each with its schedule versions and check-ins
 export async function loadTrackers(db, ctx) {
   const params = [ctx.householdId, ctx.user.id];
   const trackers = await db.query(
@@ -177,7 +171,6 @@ async function trackerCard(db, ctx, id, now) {
   return found;
 }
 
-// ---------- changing ----------
 
 async function lockTracker(tx, ctx, id) {
   if (!isUuid(id)) throw new HttpError(404, NOT_FOUND);
@@ -326,7 +319,6 @@ export async function resumeTracker(db, ctx, id, now) {
   return { tracker: await trackerCard(db, ctx, id, now) };
 }
 
-// Stop tracking: the tracker finishes and moves to the finished list with its history kept.
 // Today still counts if it was already ticked; otherwise it ends yesterday. A tracker that never had a day is simply deleted.
 export async function endTracker(db, ctx, id, now) {
   const today = todayInZone(now, ctx.timeZone);
@@ -355,7 +347,6 @@ export async function deleteTracker(db, ctx, id) {
   });
 }
 
-// ---------- ticking ----------
 
 function checkWindow(date, today) {
   cleanDate(date, 'That day');
@@ -368,7 +359,6 @@ async function dayAfter(db, ctx, date, now) {
   return buildDayView(list, date, today);
 }
 
-// Tick (done) or skip a day. Doing it twice is fine: the day just ends up in that state.
 export async function setCheckin(db, ctx, id, date, input, now) {
   const raw = obj(input);
   const today = todayInZone(now, ctx.timeZone);
@@ -391,7 +381,6 @@ export async function setCheckin(db, ctx, id, date, input, now) {
   return { day: await dayAfter(db, ctx, date, now) };
 }
 
-// Undo a tick or a skip: the day goes back to how it was before
 export async function clearCheckin(db, ctx, id, date, now) {
   const today = todayInZone(now, ctx.timeZone);
   checkWindow(date, today);

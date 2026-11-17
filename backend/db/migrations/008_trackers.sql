@@ -1,13 +1,4 @@
--- Trackers: things you do again and again (take a pill, meditate, take the trash out, work out 4 days a week).
--- They are separate from items (to-dos): they never become "overdue" and never pile up.
---
--- trackers           one row per tracker. A personal tracker is visible only to its owner; a household tracker
---                    can be seen and ticked by everybody in the household. Soft delete only (deleted_at).
--- tracker_schedules  the schedule, kept as VERSIONS. Changing a schedule adds a row that applies from that day on,
---                    so past days are never rewritten. Pausing is a version of kind 'paused'.
--- tracker_checkins   one row per tracker per day that was ticked ('done') or skipped ('skipped').
---                    Un-ticking removes the row. A household tracker has one row per day, whoever ticked it.
--- Row-level security is ON for all three tables with NO policies: only the backend can read data.
+-- Schedules are versions: a change adds a row that applies from that day on, and pausing is a version of kind 'paused'.
 create table trackers (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references households(id) on delete cascade,
@@ -38,7 +29,6 @@ create table tracker_schedules (
   -- 'interval': every N days counted from anchor_date
   interval_days  smallint,
   anchor_date    date,
-  -- 'weekly': this many days a week, any days
   per_week       smallint,
   created_at     timestamptz not null default now(),
   check (

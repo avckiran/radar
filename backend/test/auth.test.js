@@ -274,7 +274,6 @@ test('a person from another household cannot read or change this household’s d
   assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/archive`, {})).status, 404);
   assert.equal((await denied('POST', `/api/shopping/${SHOP.list}/copy`, { id: '44444444-4444-4444-8444-444444444444' })).status, 404);
   assert.deepEqual((await call('GET', '/api/shopping', { token: outsider })).body, { open: [], archived: [] });
-  // trackers too, even household ones
   assert.equal((await denied('PATCH', `/api/trackers/${TRK.tracker}`, { title: 'hacked' })).status, 404);
   assert.equal((await denied('DELETE', `/api/trackers/${TRK.tracker}`)).status, 404);
   assert.equal((await denied('POST', `/api/trackers/${TRK.tracker}/schedule`, { kind: 'days', days: [1] })).status, 404);

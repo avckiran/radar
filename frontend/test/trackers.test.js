@@ -50,7 +50,7 @@ test('editing: the form is filled from the tracker and a schedule is saved only 
   const g = formFromTracker({ ...t, schedule: days }, TODAY);
   assert.equal(scheduleChanged(g, days), false);
   assert.equal(scheduleChanged({ ...g, days: [2, 4, 6] }, days), true);
-  assert.equal(scheduleChanged(g, { kind: 'paused' }), false); // paused: the schedule fields are locked
+  assert.equal(scheduleChanged(g, { kind: 'paused' }), false);
 });
 
 test('the form says what is wrong in plain words', () => {

@@ -15,14 +15,13 @@ const TABS = [
   { to: '/trackers/manage', label: 'All' },
 ];
 
-// The Trackers area: a title, a New tracker button, the four tabs, and the add / edit form
 export default function Trackers() {
   useDocumentTitle('Trackers');
   const online = useOnline();
   const toast = useToast();
   const { notifyChanged } = useShellData();
   const list = useResource('/api/trackers');
-  const [form, setForm] = useState(null); // { tracker } while the form is open
+  const [form, setForm] = useState(null);
   const trackers = list.data?.trackers ?? [];
   const today = list.data?.today;
 

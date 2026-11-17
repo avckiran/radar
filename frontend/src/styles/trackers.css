@@ -1,5 +1,4 @@
-/* Trackers. Only design tokens, no new colours.
-   done = the emerald tokens, missed = the overdue tokens, skipped = the snoozed tokens. */
+/* Design tokens only. done = emerald, missed = overdue, skipped = snoozed. */
 .page.trk {
   max-width: 880px;
 }
@@ -13,7 +12,6 @@
   margin: 0;
 }
 
-/* Tabs */
 .trk-tabs {
   display: flex;
   gap: var(--space-4);
@@ -53,7 +51,6 @@
   }
 }
 
-/* Day and week navigation */
 .trk-daynav {
   display: flex;
   align-items: center;
@@ -78,7 +75,6 @@
   transform: scaleX(-1);
 }
 
-/* Summary of the day */
 .trk-summary {
   display: flex;
   align-items: center;
@@ -136,7 +132,6 @@
   margin: 0;
 }
 
-/* Rows */
 .trk-list {
   padding: 0;
   overflow: hidden;
@@ -162,7 +157,9 @@
 .trk-row__title {
   align-self: flex-start;
   max-width: 100%;
-  padding: 0;
+  /* 44px tap area that takes no extra room */
+  padding: 11px 0;
+  margin: -11px 0;
   background: none;
   border: 0;
   text-align: left;
@@ -209,7 +206,6 @@
   padding-right: 0;
 }
 
-/* Check button: a 44px press area around a 26px box */
 .trk-check {
   appearance: none;
   -webkit-appearance: none;
@@ -251,7 +247,6 @@
   cursor: default;
 }
 
-/* Status dots (day outcomes) and heat map cells share their colours */
 .trk-dot {
   display: inline-grid;
   place-items: center;
@@ -285,7 +280,6 @@
   border-style: dashed;
 }
 
-/* The week */
 .trk-glance {
   padding: var(--space-12) var(--space-8) var(--space-8);
   display: flex;
@@ -404,7 +398,6 @@
   color: var(--soon-fg);
 }
 
-/* Progress */
 .trk-filters {
   display: flex;
   flex-direction: column;
@@ -493,9 +486,11 @@
   background: var(--surface-2);
 }
 .trk-heat__cell.trk-dot--win {
+  background: var(--seg-emerald-dot);
   border-color: var(--seg-emerald-dot);
 }
 .trk-heat__cell.trk-dot--miss {
+  background: var(--overdue-bg);
   border-color: var(--overdue-bg);
 }
 .trk-heat__cell.trk-dot--open {
@@ -600,7 +595,6 @@
   background: var(--border);
 }
 
-/* All trackers */
 .trk-manage {
   display: flex;
   align-items: center;
@@ -635,7 +629,6 @@
   overflow-wrap: anywhere;
 }
 
-/* The add / edit form */
 .trk-form .rd-segmented {
   width: 100%;
 }
@@ -678,7 +671,6 @@
   cursor: pointer;
 }
 
-/* Home card */
 .trk-home {
   padding: var(--space-8) 0 0;
   overflow: hidden;
@@ -702,8 +694,7 @@
   padding: 0 var(--space-16);
 }
 
-/* On wide screens the form sits in a centered dialog. It is taller than the
-   shared "expanded" box, so let the dialog size itself and scroll if needed. */
+/* The form is taller than the shared "expanded" dialog, so the dialog sizes itself and scrolls. */
 .overlay--center .overlay__panel--expanded:has(.trk-form) {
   width: min(520px, calc(100vw - 32px));
   height: auto;

@@ -19,7 +19,7 @@ import {
 } from '../src/rules/trackers.js';
 import { buildDayView, buildProgress, buildWeekView, insightsOf, prepare, trackerStatus } from '../src/rules/trackerViews.js';
 
-// "Today" is Tuesday 2026-11-17. Weeks run Sunday to Saturday, so this week is 11-15 to 11-21.
+// "Today" is Tuesday 2026-11-17; weeks run Sunday to Saturday, so this week is 11-15 to 11-21.
 const TODAY = '2026-11-17';
 const tr = (over = {}) => ({ id: 't', title: 'Thing', scope: 'personal', part: 'anytime', startDate: '2026-11-01', endDate: null, ...over });
 const days = (list, from = '2026-11-01') => [{ effectiveFrom: from, kind: 'days', days: list }];
@@ -64,7 +64,7 @@ test('every other day follows the first day, also across month ends', () => {
   assert.deepEqual(due, [17, 19, 21, 23, 25, 27, 29]);
   assert.equal(slotOn(t, s, '2026-12-01'), 'due');
   assert.equal(slotOn(t, s, '2026-12-02'), null);
-  assert.equal(slotOn(tr({ startDate: '2026-11-01' }), interval(3, '2026-11-17', '2026-11-01'), '2026-11-14'), 'due'); // counts backwards too
+  assert.equal(slotOn(tr({ startDate: '2026-11-01' }), interval(3, '2026-11-17', '2026-11-01'), '2026-11-14'), 'due');
 });
 
 test('a tracker is only scheduled between its start and end dates', () => {
@@ -84,7 +84,7 @@ test('changing the schedule never rewrites the past', () => {
   ];
   assert.equal(scheduleOn(s, '2026-11-09').days.length, 7);
   assert.equal(slotOn(t, s, '2026-11-04'), 'due'); // Wednesday before the change: still a due day
-  assert.equal(slotOn(t, s, '2026-11-11'), null); // Wednesday after the change
+  assert.equal(slotOn(t, s, '2026-11-11'), null);
   assert.equal(slotOn(t, s, '2026-11-17'), 'due');
   // two versions on the same day: the later one wins
   const same = [...s, { effectiveFrom: '2026-11-10', kind: 'paused' }];
@@ -108,14 +108,13 @@ test('day states: done, skipped, missed, open, upcoming, off', () => {
   assert.equal(dayState(t, s, '2026-11-17', undefined, TODAY).state, 'open');
   assert.equal(dayState(t, s, '2026-11-18', undefined, TODAY).state, 'upcoming');
   assert.equal(dayState(t, s, '2026-11-19', undefined, TODAY).state, 'off');
-  // a check-in on a day that is no longer scheduled is ignored
   assert.equal(dayState(t, s, '2026-11-19', { status: 'done' }, TODAY).state, 'off');
 });
 
 test('N days a week: met, in progress, missed, and skipped days lower the target', () => {
   const t = tr();
   const s = weekly(4);
-  const last = '2026-11-08'; // the week 11-08 to 11-14 is over
+  const last = '2026-11-08';
   let q = quotaWeek(t, s, last, marks({ '2026-11-09': 'done', '2026-11-10': 'done', '2026-11-12': 'done' }), TODAY);
   assert.deepEqual([q.done, q.required, q.status], [3, 4, 'missed']);
   q = quotaWeek(t, s, last, marks({ '2026-11-09': 'done', '2026-11-10': 'done', '2026-11-12': 'done', '2026-11-13': 'done' }), TODAY);
@@ -145,10 +144,10 @@ test('streaks: a miss breaks the run, skipped days and today (open) do not', () 
   const s = days(ALL);
   const done = {};
   for (let d = 1; d <= 16; d++) done[`2026-11-${String(d).padStart(2, '0')}`] = 'done';
-  delete done['2026-11-10']; // missed
+  delete done['2026-11-10'];
   done['2026-11-13'] = 'skipped';
   const events = occurrences(t, s, marks(done), TODAY);
-  assert.equal(events.at(-1).result, 'open'); // today
+  assert.equal(events.at(-1).result, 'open');
   const st = streakOf(events);
   assert.equal(st.best, 9); // 11-01 to 11-09
   assert.equal(st.current, 5); // 11-11, 11-12, 11-14, 11-15, 11-16 (11-13 was skipped, so it adds nothing and breaks nothing)
@@ -184,7 +183,7 @@ test('a day is a win, a miss, open, rest or upcoming', () => {
   const pill = { t: tr({ id: 'pill' }), schedules: days(ALL), byDate: marks({ '2026-11-16': 'done' }) };
   const med = { t: tr({ id: 'med' }), schedules: days(ALL), byDate: marks({ '2026-11-16': 'done', '2026-11-15': 'done' }) };
   assert.equal(dayOutcome([pill, med], '2026-11-16', TODAY).state, 'win');
-  assert.equal(dayOutcome([pill, med], '2026-11-15', TODAY).state, 'miss'); // the pill was missed
+  assert.equal(dayOutcome([pill, med], '2026-11-15', TODAY).state, 'miss');
   assert.equal(dayOutcome([pill, med], TODAY, TODAY).state, 'open');
   assert.equal(dayOutcome([pill, med], '2026-11-18', TODAY).state, 'upcoming');
   assert.equal(dayOutcome([], TODAY, TODAY).state, 'rest');
@@ -195,13 +194,12 @@ test('a day is a win, a miss, open, rest or upcoming', () => {
 test('a workout on a day with nothing else due is a win; a workout never causes a miss', () => {
   const trash = { t: tr({ id: 'trash' }), schedules: days([2]), byDate: new Map() };
   const gym = { t: tr({ id: 'gym' }), schedules: weekly(4), byDate: marks({ '2026-11-16': 'done' }) };
-  assert.equal(dayOutcome([trash, gym], '2026-11-16', TODAY).state, 'win'); // Monday: trash not due, workout done
-  assert.equal(dayOutcome([trash, gym], '2026-11-14', TODAY).state, 'rest'); // Saturday: nothing due, no workout ticked
+  assert.equal(dayOutcome([trash, gym], '2026-11-16', TODAY).state, 'win');
+  assert.equal(dayOutcome([trash, gym], '2026-11-14', TODAY).state, 'rest');
 });
 
 test('day streak: rest days and today do not break it', () => {
   const trash = { t: tr({ startDate: '2026-11-03' }), schedules: days([2], '2026-11-03'), byDate: marks({ '2026-11-03': 'done', '2026-11-10': 'done' }) };
-  // Tuesday 11-17 is today and still open
   assert.deepEqual(dayStreak([trash], TODAY), { current: 2, best: 2, wins: 2 });
   const miss = { ...trash, byDate: marks({ '2026-11-03': 'done' }) };
   assert.deepEqual(dayStreak([miss], TODAY), { current: 0, best: 1, wins: 1 });
@@ -273,7 +271,7 @@ test('progress: summary, heatmap of 12 weeks, a card per tracker', () => {
   assert.equal(p.summary.nextMilestone.target, 30);
   assert.equal(p.heatmap.length, 12);
   assert.equal(p.heatmap[11].weekStart, '2026-11-15');
-  assert.equal(p.heatmap[11].days[2].state, 'open'); // today
+  assert.equal(p.heatmap[11].days[2].state, 'open');
   assert.equal(p.heatmap[11].days[3].state, 'upcoming');
   assert.equal(p.cards.length, 1);
   assert.equal(p.cards[0].streak.current, 16);

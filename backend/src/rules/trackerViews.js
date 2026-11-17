@@ -19,8 +19,6 @@ import {
   dayState,
 } from './trackers.js';
 
-// What the screens need, built from the pure rules. Every entry of `list` is { t, schedules, byDate }:
-// one tracker the signed-in person may see, with its schedule versions and its check-ins by date.
 
 export function prepare(list, today) {
   return list.map((e) => ({ ...e, events: occurrences(e.t, e.schedules, e.byDate, today) }));
@@ -68,7 +66,6 @@ function rowFor(e, date, today) {
   };
 }
 
-// One day: the groups (Morning, Afternoon, Evening, Anytime), a summary, and how the week and streak are going
 export function buildDayView(list, date, today) {
   const rows = list.map((e) => rowFor(e, date, today)).filter(Boolean);
   const groups = PARTS.map((part) => ({ part, rows: rows.filter((r) => r.part === part) })).filter((g) => g.rows.length);
@@ -85,7 +82,6 @@ export function buildDayView(list, date, today) {
   };
 }
 
-// One week, tracker by tracker, with a column for each day
 export function buildWeekView(list, weekStart, today) {
   const rows = list
     .map((e) => {
@@ -121,7 +117,6 @@ export function buildWeekView(list, weekStart, today) {
   };
 }
 
-// The manage list: every tracker with its schedule and how it is going
 export function buildTrackerList(list, today) {
   const rows = list.map((e) => {
     const cur = currentSchedule(e.schedules, today);
@@ -152,7 +147,6 @@ function pooled(list) {
 
 export const RANGES = { 7: 7, 30: 30, 90: 90 };
 
-// The Progress dashboard. trackerId (optional) narrows everything to one tracker.
 export function buildProgress(list, { today, range = '30', trackerId = null }) {
   const chosen = trackerId ? list.filter((e) => e.t.id === trackerId) : list;
   const earliest = earliestStart(chosen);
@@ -239,7 +233,6 @@ export function buildProgress(list, { today, range = '30', trackerId = null }) {
 const WEEKDAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 const PART_NAMES = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', anytime: 'Anytime' };
 
-// A couple of plain observations from the last 90 days of misses
 export function insightsOf(events, today) {
   const from = addDays(today, -89);
   const missed = events.filter((e) => e.kind === 'day' && e.result === 'missed' && e.date >= from);
@@ -258,7 +251,6 @@ export function insightsOf(events, today) {
   return out;
 }
 
-// The small card on Home: today's fixed trackers and "N days a week" ones, open first
 export function buildHomeTrackers(list, today) {
   const day = buildDayView(list, today, today);
   const rows = day.groups.flatMap((g) => g.rows);

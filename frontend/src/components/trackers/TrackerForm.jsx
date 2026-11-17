@@ -41,7 +41,7 @@ function Segmented({ label, value, options, onChange, disabled }) {
   );
 }
 
-// New tracker or edit. A new tracker's ID is made once, so pressing Save twice never makes two trackers.
+// The ID is made once per form, so pressing Save twice never makes two trackers.
 export default function TrackerForm({ tracker, today, onClose, onSaved }) {
   const isNew = !tracker;
   const id = useRef(newId());

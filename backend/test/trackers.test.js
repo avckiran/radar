@@ -26,7 +26,6 @@ import {
   updateTracker,
 } from '../src/trackers.js';
 
-// Trackers against a real Postgres engine (PGlite) with the real migrations.
 // "Now" is Tuesday 2026-11-17, 10:00 in New York.
 const NOW = new Date('2026-11-17T15:00:00Z');
 const TODAY = '2026-11-17';
@@ -117,7 +116,7 @@ test('the same create request twice makes one tracker', async () => {
   assert.equal(again.created, false);
   assert.equal((await pg.query('select count(*)::int n from trackers where id = $1', [tid])).rows[0].n, 1);
   assert.equal((await pg.query('select count(*)::int n from tracker_schedules where tracker_id = $1', [tid])).rows[0].n, 1);
-  await fails(createTracker(db, komal, input, NOW), 409); // somebody else's personal tracker: the ID is taken
+  await fails(createTracker(db, komal, input, NOW), 409);
   await deleteTracker(db, chandra, tid);
 });
 
@@ -149,7 +148,6 @@ test('ticking, undoing and skipping a day', async () => {
   assert.equal(find(r.day, 'Prayer').state, 'done');
   assert.equal(find(r.day, 'Prayer').checkedBy, 'Chandra');
   assert.deepEqual(r.day.summary, { state: 'win', done: 1, total: 1, skipped: 0, bonus: 0 });
-  // doing it twice leaves one check-in
   await setCheckin(db, chandra, t.id, TODAY, { status: 'done' }, NOW);
   assert.equal((await pg.query('select count(*)::int n from tracker_checkins where tracker_id = $1', [t.id])).rows[0].n, 1);
   r = await clearCheckin(db, chandra, t.id, TODAY, NOW);
@@ -169,7 +167,6 @@ test('only today and the six days before can be changed; days must be scheduled'
   await fails(setCheckin(db, chandra, t.id, '2026-11-10', {}, NOW), 400, /last|before/); // 7 days ago
   await fails(setCheckin(db, chandra, t.id, 'nonsense', {}, NOW), 400);
   await fails(setCheckin(db, chandra, t.id, '2026-11-16', {}, NOW), 409, /isn’t a day/); // Monday
-  // a tracker that starts tomorrow cannot be ticked today
   const later = await make({ title: 'Starts tomorrow', startDate: '2026-11-18' });
   await fails(setCheckin(db, chandra, later.id, TODAY, {}, NOW), 409, /isn’t a day/);
   await deleteTracker(db, chandra, t.id);
@@ -194,11 +191,9 @@ test('yesterday can be ticked from the day view, and a missed day shows as misse
 test('a personal tracker is private; a household tracker is shared and shows who ticked it', async () => {
   const mine = await make({ title: 'Secret pill', scope: 'personal' });
   const shared = await make({ title: 'Laundry', scope: 'household', schedule: { kind: 'days', days: [2] } });
-  // Komal sees only the household one
   const k = await listTrackers(db, komal, NOW);
   assert.deepEqual(k.trackers.map((x) => x.title), ['Laundry']);
   assert.equal((await listTrackers(db, chandra, NOW)).trackers.some((x) => x.title === 'Secret pill'), true);
-  // and cannot reach the personal one in any way
   await fails(setCheckin(db, komal, mine.id, TODAY, {}, NOW), 404);
   await fails(clearCheckin(db, komal, mine.id, TODAY, NOW), 404);
   await fails(updateTracker(db, komal, mine.id, { title: 'Hijack' }, NOW), 404);
@@ -207,13 +202,11 @@ test('a personal tracker is private; a household tracker is shared and shows who
   await fails(endTracker(db, komal, mine.id, NOW), 404);
   await fails(deleteTracker(db, komal, mine.id), 404);
   await fails(trackerProgress(db, komal, { trackerId: mine.id }, NOW), 404);
-  // either person can tick the shared one; it counts for both
   const r = await setCheckin(db, komal, shared.id, TODAY, {}, NOW);
   assert.equal(find(r.day, 'Laundry').checkedBy, 'Komal');
   const c = await trackerDay(db, chandra, TODAY, NOW);
   assert.equal(find(c, 'Laundry').state, 'done');
   assert.equal(find(c, 'Laundry').checkedBy, 'Komal');
-  // nobody outside the household sees any of it
   assert.deepEqual((await listTrackers(db, outsider, NOW)).trackers, []);
   await fails(setCheckin(db, outsider, shared.id, TODAY, {}, NOW), 404);
   await deleteTracker(db, chandra, mine.id);
@@ -226,7 +219,7 @@ test('a schedule change applies from today and keeps the past as it was', async 
   // daily since 11-10; change to Tuesdays only today (Tuesday 11-17)
   await setSchedule(db, chandra, t.id, { kind: 'days', days: [2] }, NOW);
   const wed = await trackerDay(db, chandra, '2026-11-11', NOW);
-  assert.equal(find(wed, 'Daily').state, 'missed'); // Wednesday was a due day under the old schedule
+  assert.equal(find(wed, 'Daily').state, 'missed');
   const tomorrow = await trackerDay(db, chandra, '2026-11-18', NOW);
   assert.equal(find(tomorrow, 'Daily'), undefined);
   const card = (await listTrackers(db, chandra, NOW)).trackers.find((x) => x.id === t.id);
@@ -241,17 +234,17 @@ test('pause stops the days from counting; resume brings the old schedule back', 
   let card = (await pauseTracker(db, chandra, t.id, NOW)).tracker;
   assert.equal(card.status, 'paused');
   assert.equal(find(await trackerDay(db, chandra, TODAY, NOW), 'Pausable'), undefined);
-  assert.equal(find(await trackerDay(db, chandra, '2026-11-12', NOW), 'Pausable').state, 'missed'); // before the pause
-  await pauseTracker(db, chandra, t.id, NOW); // pausing twice changes nothing
+  assert.equal(find(await trackerDay(db, chandra, '2026-11-12', NOW), 'Pausable').state, 'missed');
+  await pauseTracker(db, chandra, t.id, NOW);
   assert.equal((await pg.query('select count(*)::int n from tracker_schedules where tracker_id = $1', [t.id])).rows[0].n, 2);
   const later = when('2026-11-19');
   card = (await resumeTracker(db, chandra, t.id, later)).tracker;
   assert.equal(card.status, 'active');
   assert.equal(card.scheduleText, 'Weekdays');
-  await resumeTracker(db, chandra, t.id, later); // resuming twice changes nothing
+  await resumeTracker(db, chandra, t.id, later);
   assert.equal((await pg.query('select count(*)::int n from tracker_schedules where tracker_id = $1', [t.id])).rows[0].n, 3);
   const during = await trackerDay(db, chandra, '2026-11-18', later);
-  assert.equal(find(during, 'Pausable'), undefined); // the paused days never become misses
+  assert.equal(find(during, 'Pausable'), undefined);
   await deleteTracker(db, chandra, t.id);
 });
 
@@ -271,16 +264,14 @@ test('stop tracking finishes the tracker and keeps its history; one that never h
   await setCheckin(db, chandra, t.id, '2026-11-12', {}, NOW);
   const r = await endTracker(db, chandra, t.id, NOW);
   assert.equal(r.tracker.status, 'finished');
-  assert.equal(r.tracker.endDate, '2026-11-16'); // yesterday: today was not ticked
+  assert.equal(r.tracker.endDate, '2026-11-16');
   assert.equal(find(await trackerDay(db, chandra, TODAY, NOW), 'Six months'), undefined);
   assert.equal(find(await trackerDay(db, chandra, '2026-11-12', NOW), 'Six months').state, 'done');
   await fails(updateTracker(db, chandra, t.id, { title: 'New name' }, NOW), 409, /finished/);
   await fails(setSchedule(db, chandra, t.id, { kind: 'days', days: [1] }, NOW), 409, /finished/);
-  // ticked today: today still counts
   const u = await make({ title: 'Ticked today' });
   await setCheckin(db, chandra, u.id, TODAY, {}, NOW);
   assert.equal((await endTracker(db, chandra, u.id, NOW)).tracker.endDate, TODAY);
-  // never had a day
   const n = await make({ title: 'Oops' });
   assert.deepEqual(await endTracker(db, chandra, n.id, NOW), { deleted: true, tracker: null });
   assert.equal((await listTrackers(db, chandra, NOW)).trackers.some((x) => x.id === n.id), false);
@@ -315,7 +306,7 @@ test('a workout quota: ticks add up and the week view shows it', async () => {
   w = await trackerWeek(db, chandra, '2026-11-09', NOW); // the previous week, which starts on Sunday 11-08
   assert.equal(w.weekStart, '2026-11-08');
   assert.equal(w.rows[0].quota.done, 0);
-  assert.equal(w.rows[0].status, 'missed'); // 11-10 to 11-14 were available and nothing was ticked
+  assert.equal(w.rows[0].status, 'missed');
   await fails(trackerWeek(db, chandra, 'soon', NOW), 400);
   await deleteTracker(db, chandra, t.id);
 });
@@ -387,7 +378,6 @@ test('the routes work over HTTP', async () => {
   assert.equal((await res.json()).tracker.scheduleText, '3 days a week');
   res = await fetch(`${base}/api/trackers/${tid}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: 'Renamed' }) });
   assert.equal((await res.json()).tracker.title, 'Renamed');
-  // it started today and has no finished day, so stopping it deletes it
   res = await post(`/api/trackers/${tid}/end`);
   assert.equal((await res.json()).deleted, true);
   assert.equal((await fetch(`${base}/api/trackers/${tid}`, { method: 'DELETE' })).status, 404);

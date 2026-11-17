@@ -1,10 +1,6 @@
 import { addDays, daysBetween, weekdayOf } from '../dates.js';
 
-// The rules for trackers, with no database in them. Everything here works on plain objects:
-//   tracker    { id, startDate, endDate, ... }                     (dates are 'YYYY-MM-DD' strings)
-//   schedules  [{ effectiveFrom, kind, days, intervalDays, anchorDate, perWeek }]  oldest first
-//   byDate     Map of 'YYYY-MM-DD' -> { status: 'done' | 'skipped', ... }  (the check-ins)
-// A day is judged by the schedule that was in force on that day, so editing a schedule never rewrites the past.
+// A day is judged by the schedule in force on that day, so editing a schedule never rewrites the past.
 
 export const PARTS = ['morning', 'afternoon', 'evening', 'anytime'];
 export const KINDS = ['days', 'interval', 'weekly'];
@@ -12,7 +8,6 @@ export const KINDS = ['days', 'interval', 'weekly'];
 const SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const PLURAL = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 
-// Weeks run Sunday to Saturday, like the rest of RADAR
 export function startOfWeek(ymd) {
   return addDays(ymd, -weekdayOf(ymd));
 }
@@ -27,12 +22,10 @@ export function scheduleOn(schedules, date) {
   return found;
 }
 
-// The schedule to show in lists: the one in force today, or the first one if the tracker has not started yet
 export function currentSchedule(schedules, today) {
   return scheduleOn(schedules, today) ?? schedules[0] ?? null;
 }
 
-// The last schedule that was not a pause, used when a paused tracker is resumed
 export function lastActiveSchedule(schedules) {
   for (let i = schedules.length - 1; i >= 0; i--) if (schedules[i].kind !== 'paused') return schedules[i];
   return null;
@@ -84,7 +77,6 @@ export function dayState(t, schedules, date, checkin, today) {
   return { slot, state: date < today ? 'missed' : 'open' };
 }
 
-// A "N days a week" tracker, for the week that starts on weekStart (null when none of its days are flexible).
 // A skipped day does not count as available, so skipping days you cannot train lowers the target (never below zero).
 export function quotaWeek(t, schedules, weekStart, byDate, today) {
   const dates = [];
@@ -112,7 +104,6 @@ export function quotaWeek(t, schedules, weekStart, byDate, today) {
   return { weekStart, perWeek, required: Math.max(required, 0), done, skipped, daysLeft, status, atRisk: status === 'inProgress' && done + daysLeft < required };
 }
 
-// One tracker for one week: each day, plus a status for the whole week
 export function trackerWeek(t, schedules, weekStart, byDate, today) {
   const days = [];
   for (let i = 0; i < 7; i++) {
@@ -133,8 +124,6 @@ export function trackerWeek(t, schedules, weekStart, byDate, today) {
   return { weekStart, days, status, quota, due: due.length, done };
 }
 
-// Everything that counts toward a streak, oldest first: one entry per fixed day, and one per "N days a week" week.
-// result: done | skipped | missed | open
 export function occurrences(t, schedules, byDate, today) {
   const last = t.endDate && t.endDate < today ? t.endDate : today;
   const out = [];
@@ -170,7 +159,6 @@ export function streakOf(entries) {
   return { current: run, best };
 }
 
-// Share of done out of done + missed, in whole percent. Skipped and still-open entries are left out. null when nothing counts yet.
 export function completionOf(entries, from, to) {
   let done = 0;
   let missed = 0;
@@ -242,7 +230,6 @@ export function dayStreak(list, today) {
   return { current: run, best, wins };
 }
 
-// One week across a set of trackers: missed if any tracker missed, in progress while anything is still to come, met otherwise
 export function weekOutcome(list, weekStart, today) {
   const weeks = list.map(({ t, schedules, byDate }) => trackerWeek(t, schedules, weekStart, byDate, today));
   const counted = weeks.filter((w) => w.status !== 'none');

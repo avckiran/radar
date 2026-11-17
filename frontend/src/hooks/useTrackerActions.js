@@ -3,8 +3,6 @@ import { apiDelete, apiPost } from '../lib/api.js';
 import { useShellData } from './useShellData.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 
-// Ticking, un-ticking and skipping a day. Every call answers with the refreshed day, which the screen can show at once;
-// the rest of the app (Home, other tabs) is told that something changed so it reloads quietly.
 export function useTrackerActions({ onDay } = {}) {
   const toast = useToast();
   const { notifyChanged } = useShellData();

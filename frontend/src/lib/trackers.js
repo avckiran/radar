@@ -1,9 +1,8 @@
 import { addDays, daysBetween, monthDay, shortDate } from './dates.js';
 
-// Words and small rules for the Trackers screens. No screens in here, so it can be tested on its own.
 
 export const LIMITS = { title: 80, note: 500, skipNote: 200 };
-export const BACKFILL_DAYS = 7; // today and the six days before it can be changed
+export const BACKFILL_DAYS = 7;
 
 export const PARTS = [
   { key: 'morning', label: 'Morning' },
@@ -13,7 +12,6 @@ export const PARTS = [
 ];
 export const PART_LABEL = Object.fromEntries(PARTS.map((p) => [p.key, p.label]));
 
-// Weeks run Sunday to Saturday, like everywhere else in RADAR
 export const DAY_CHIPS = [
   { value: 0, letter: 'S', short: 'Sun', name: 'Sunday' },
   { value: 1, letter: 'M', short: 'Mon', name: 'Monday' },
@@ -51,7 +49,7 @@ export function emptyForm(today) {
   };
 }
 
-// The form for an existing tracker. A paused tracker has no schedule to show, so it gets the defaults (and the schedule fields are locked).
+// A paused tracker has no schedule to show, so it gets the defaults and its schedule fields are locked.
 export function formFromTracker(t, today) {
   const form = emptyForm(today);
   form.title = t.title;
@@ -74,7 +72,6 @@ export function scheduleBody(form) {
   return { kind: 'days', days: [...form.days].sort((a, b) => a - b) };
 }
 
-// Did the person change how often it happens? (Only then is a new schedule saved.)
 export function scheduleChanged(form, current) {
   if (!current || current.kind === 'paused') return false;
   const next = scheduleBody(form);

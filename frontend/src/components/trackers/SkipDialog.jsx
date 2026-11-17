@@ -2,7 +2,6 @@ import { useState } from 'react';
 import Overlay from '../ui/Overlay.jsx';
 import { LIMITS } from '../../lib/trackers.js';
 
-// Skipping is for a day you cannot do it (sick, travelling). It never breaks a streak and never counts as missed.
 export default function SkipDialog({ row, dayLabel, busy, onClose, onSkip }) {
   const [note, setNote] = useState('');
   return (

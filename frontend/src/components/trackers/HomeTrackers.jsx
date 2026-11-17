@@ -6,7 +6,6 @@ import { useOnline } from '../../hooks/useOnline.js';
 import { useTrackerActions } from '../../hooks/useTrackerActions.js';
 import { PART_LABEL, daySummary, quotaText } from '../../lib/trackers.js';
 
-// Today's trackers on Home, with a check box on each. Everything else lives on the Trackers screen.
 export default function HomeTrackers({ trackers, today }) {
   const online = useOnline();
   const actions = useTrackerActions();
